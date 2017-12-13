@@ -1,0 +1,5 @@
+numpy==1.13.3
+opencv-python==3.3.0.10
+Pillow==4.3.0
+pyinstaller==3.3
+pyserial==3.4
