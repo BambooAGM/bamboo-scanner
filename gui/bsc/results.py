@@ -1,4 +1,5 @@
-from tkinter import messagebox
+from datetime import datetime
+from tkinter import filedialog, messagebox
 from tkinter import *
 from backend.bsc import *
 from gui.widgets.custom import RedButton, YellowButton
@@ -10,12 +11,13 @@ class ResultsBSC(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
+        self.title = "Results"
         self.initialize_widgets()
         self.bind("<<ShowFrame>>", self.on_show_frame)
 
     def initialize_widgets(self):
         # Result image
-        self.image_container = Label(self)
+        self.image_container = Label(self, width=400, height=400)
         self.image_container.grid(row=0, columnspan=2)
 
         # Save button
@@ -31,14 +33,23 @@ class ResultsBSC(Frame):
 
     def on_show_frame(self, event=None):
         # update page title
-        #self.controller.update_page_title(self.title)
-        self.image_container.configure(image=get_output_image())
+        self.controller.update_page_title(self.title)
+
+        self.image = render_final_circumferences()
+        self.image_container.configure(image=self.image)
 
     def save(self):
-        for (x, y, r) in get_circumferences():
-            print(x, y, r)
-        # TODO generate text file and show confirmation
-        self.restart_bsc()
+        date = datetime.now().strftime('%Y-%m-%d_%H%M%S')
+        save_path = filedialog.asksaveasfilename(title="Save as", defaultextension=".txt", initialfile="BSC_" + date)
+
+        # make sure the user didn't cancel the dialog
+        if len(save_path) > 0:
+            if generate_text_file(save_path):
+                # all good
+                messagebox.showinfo("Success!", "File was generated successfully.")
+                self.restart_bsc()
+            else:
+                messagebox.showerror("Error generating text file", "Make sure you have access to the selected destination.")
 
     def discard(self):
         result = messagebox.askokcancel("Discard results?", "All progress will be lost.", default="cancel", icon="warning")
@@ -48,6 +59,7 @@ class ResultsBSC(Frame):
     def restart_bsc(self):
         # Clear result image
         self.image_container.configure(image=None)
+        self.image = None
 
         # go to BSC Configuration page
         self.controller.show_frame("ConfigBSC")

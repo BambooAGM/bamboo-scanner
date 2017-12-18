@@ -2,7 +2,9 @@ from tkinter import font, messagebox
 from tkinter import *
 from PIL import ImageTk, Image
 from gui.home import Home
-from gui.bsc.configuration import ConfigBSC
+from gui.bsc.choose_image import ConfigBSC
+from gui.bsc.choose_ref_object import RefObjectBSC
+from gui.bsc.pick_circumferences import PickCircumferencesBSC
 from gui.bsc.results import ResultsBSC
 from gui.bpc.configuration import ConfigBPC
 from gui.bpc.measure import MeasureBPC
@@ -63,7 +65,7 @@ class BambooScanner(Tk):
 
         # Initialize all pages and keep their references accessible
         self.frames = {}
-        for F in (Home, ConfigBPC, MeasureBPC, ResultsBPC, ConfigBSC, ResultsBSC):
+        for F in (Home, ConfigBPC, MeasureBPC, ResultsBPC, ConfigBSC, RefObjectBSC, PickCircumferencesBSC, ResultsBSC):
             page_name = F.__name__
             frame = F(parent=self.container, controller=self)
             self.frames[page_name] = frame

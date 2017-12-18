@@ -15,22 +15,28 @@ class ConfigBSC(Frame):
         self.bind("<<ShowFrame>>", self.on_show_frame)
 
     def initialize_widgets(self):
+        # Watchers
+
+        # Update begin button state
+        self.image_path = StringVar()
+        self.image_path.trace("w", self.update_begin_button)
+
         # image to be processed
         self.image_label = StringVar()
         self.image_label.set("Click below to browse for an image")
         self.placeholder_image = ImageTk.PhotoImage(Image.open("assets/placeholder_image.png"))
         self.image_container = Label(self, image=self.placeholder_image, textvariable=self.image_label,
-                                     font=self.controller.bold_font, compound=BOTTOM, pady=10)
+                                     font=self.controller.bold_font, compound=BOTTOM, pady=10, width=400, height=400)
         # bind to click event
         self.image_container.bind("<Button-1>", self.load_image)
         self.image_container.grid(row=0, column=0, columnspan=2)
 
-        # begin button
-        self.begin_button = YellowButton(self, text="BEGIN", command=self.begin, state=DISABLED)
-        self.begin_button.grid(row=1, column=1, sticky=E, padx=10)
+        # self.path_entry = Entry(self, textvariable=self.image_path, state="readonly")
+        # self.path_entry.grid(row=0, column=2, columnspan=2, sticky=EW)
 
-        self.image_path = StringVar()
-        self.image_path.trace("w", self.validate)
+        # begin button
+        self.begin_button = YellowButton(self, text="BEGIN", command=self.begin)
+        self.begin_button.grid(row=1, column=1, sticky=E, padx=10)
 
         make_rows_responsive(self)
         make_columns_responsive(self)
@@ -58,24 +64,30 @@ class ConfigBSC(Frame):
             # keep a reference
             self.image_container.image = image
 
-    def validate(self, *args):
+    def update_begin_button(self, *args):
         if self.image_path.get():
-            self.begin_button.configure(state=NORMAL)
+            self.begin_button.grid()
         else:
-            self.begin_button.configure(state=DISABLED)
+            self.begin_button.grid_remove()
 
     def begin(self):
-        if process_image(self.image_path.get()) == "ok":
+        status = process_image(self.image_path.get())
+
+        if status == "OK":
             # Go to results page
-            self.controller.show_frame("ResultsBSC")
+            self.controller.show_frame("RefObjectBSC")
         else:
-            messagebox.showerror("Error processing image", "Custom message here??")
+            # show error message
+            messagebox.showerror("Something's not right", status)
+            # disable begin button
+            self.image_path.set("")
 
     def on_show_frame(self, event=None):
         # update page title
         self.controller.update_page_title(self.title)
         # reset state
         self.reset()
+        self.update_begin_button()
 
     def reset(self):
         # update the container before removing the image reference
