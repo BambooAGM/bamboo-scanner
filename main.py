@@ -78,6 +78,7 @@ class BambooScanner(Tk):
         make_columns_responsive(self.container, ignored=[0])
 
         # Start on the home page
+        self.active_frame = None
         self.go_home(None)
 
     def go_home(self, event):
@@ -90,10 +91,16 @@ class BambooScanner(Tk):
 
         :param page_name: class name of destination frame
         """
-        frame = self.frames[page_name]
-        frame.update()
-        frame.event_generate("<<ShowFrame>>")
-        frame.tkraise()
+
+        # If there is an active frame, signal its exit
+        if self.active_frame is not None:
+            self.active_frame.event_generate("<<LeaveFrame>>")
+
+        # Switch to new active frame
+        self.active_frame = self.frames[page_name]
+        self.active_frame.update()
+        self.active_frame.event_generate("<<ShowFrame>>")
+        self.active_frame.tkraise()
 
     def get_frame(self, page_name):
         """

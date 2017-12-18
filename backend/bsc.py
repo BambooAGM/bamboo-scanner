@@ -1,7 +1,7 @@
 from PIL import ImageTk, Image
 from scipy.spatial import distance as dist
 from imutils import contours, perspective, resize
-from backend.utils import rect_to_polar, get_date
+from utils import rect_to_polar, get_date
 import numpy as np
 import cv2
 import math

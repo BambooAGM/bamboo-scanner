@@ -3,6 +3,7 @@ from gui.widgets.grid_helpers import make_rows_responsive, make_columns_responsi
 from gui.widgets.custom import TableLeftHeaders, YellowButton, GreenButton
 from backend.sensors_manager import *
 
+
 class MeasureBPC(Frame):
 
     def __init__(self, parent, controller):
@@ -11,6 +12,7 @@ class MeasureBPC(Frame):
         self.title = "Live Sensor Readings (cm)"
         self.initialize_widgets()
         self.bind("<<ShowFrame>>", self.on_show_frame)
+        self.bind("<<LeaveFrame>>", self.on_leave_frame)
 
     def initialize_widgets(self):
         # Watchers
@@ -55,23 +57,30 @@ class MeasureBPC(Frame):
         self.do_sensors_update = True
         self.update_sensors()
 
-    def update_sensors(self):
-        # sensors_data = None
-        # while sensors_data is None:
-        #     sensors_data = getInstantRawSensorData()
-        # print(sensors_data)
+    def on_leave_frame(self, event=None):
+        # stop live feed and close serial port
+        self.do_sensors_update = False
+        closeArduinoSerial()
 
-        sensors_data = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "22"]
+    def update_sensors(self):
+        sensors_data = getInstantRawSensorData()
+        print(sensors_data)
+
+        # sensors_data = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "22"]
         self.table.update_cells(sensors_data[0:12])
         self.z_value.set("Z = " + sensors_data[12] + " cm")
         # print("updated sensors")
-        # if self.do_sensors_update:
-        #     self.after(50, self.update_sensors)
+        if self.do_sensors_update:
+            self.after(100, self.update_sensors)
+        else:
+            closeArduinoSerial()
 
     def capture(self):
         #bpc.save_measurements()
+        # update captured count label
         self.count_number.set(self.count_number.get() + 1)
-        # only need to update on the first capture
+
+        # enable view results button after the 1st capture
         if self.count_number.get() == 1:
             self.update_results_button()
         print("captured")
@@ -86,6 +95,4 @@ class MeasureBPC(Frame):
         self.count_str.set(str(self.count_number.get()) + " measurements captured")
 
     def view_results(self):
-        self.do_sensors_update = False
-        # closeArduinoSerial()
         self.controller.show_frame("ResultsBPC")

@@ -3,6 +3,7 @@ from tkinter import *
 from backend.bsc import *
 from gui.widgets.custom import YellowButton
 from gui.widgets.grid_helpers import make_rows_responsive, make_columns_responsive
+from utils import resize_keep_aspect
 
 
 class ConfigBSC(Frame):
@@ -26,10 +27,11 @@ class ConfigBSC(Frame):
         self.image_label.set("Click below to browse for an image")
         self.placeholder_image = ImageTk.PhotoImage(Image.open("assets/placeholder_image.png"))
         self.image_container = Label(self, image=self.placeholder_image, textvariable=self.image_label,
-                                     font=self.controller.bold_font, compound=BOTTOM, pady=10, width=400, height=400)
+                                     font=self.controller.bold_font, compound=BOTTOM, pady=10)
+
         # bind to click event
         self.image_container.bind("<Button-1>", self.load_image)
-        self.image_container.grid(row=0, column=0, columnspan=2)
+        self.image_container.grid(row=0, column=0, columnspan=2, sticky=NSEW)
 
         # self.path_entry = Entry(self, textvariable=self.image_path, state="readonly")
         # self.path_entry.grid(row=0, column=2, columnspan=2, sticky=EW)
@@ -41,12 +43,16 @@ class ConfigBSC(Frame):
         make_rows_responsive(self)
         make_columns_responsive(self)
 
+
+
+
+
     def load_image(self, event):
         # open a file chooser dialog and allow the user to select a source image
         temp_path = filedialog.askopenfilename(title="Select an image",
-                                               filetypes=(("PNG", "*.png"),
-                                                          ("JPEG", "*.jpg"),
-                                                          ("All files", "*.*")))
+                                               filetypes=(("All files", "*.*"),
+                                                          ("PNG", "*.png"),
+                                                          ("JPEG", "*.jpg")))
 
         # TODO - check file extension, restrict to image
 
@@ -55,14 +61,16 @@ class ConfigBSC(Frame):
             # update image path & enable begin button
             self.image_path.set(temp_path)
 
-            # Creates a Tkinter-compatible photo image, which can be used everywhere Tkinter expects an image object.
-            image = ImageTk.PhotoImage(Image.open(temp_path))
+            # create a Tkinter-compatible photo image
+            self.image = Image.open(temp_path)
+            self.image = resize_keep_aspect(self.image.width, self.image.height, 800, 800, self.image)
 
-            self.image_label.set("Image to be processed")
+            # self.image = self.image.resize((600, 600))
+            self.tk_image = ImageTk.PhotoImage(self.image)
+
             # update image container
-            self.image_container.configure(image=image)
-            # keep a reference
-            self.image_container.image = image
+            self.image_container.configure(image=self.tk_image)
+            self.image_label.set("Image to be processed")
 
     def update_begin_button(self, *args):
         if self.image_path.get():
@@ -92,7 +100,7 @@ class ConfigBSC(Frame):
     def reset(self):
         # update the container before removing the image reference
         self.image_container.configure(image=self.placeholder_image)
-        self.image_container.image = None
+        self.image = None
         self.image_label.set("Click below to browse for an image")
         self.image_path.set("")
         reset_backend()
