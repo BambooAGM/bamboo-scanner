@@ -229,29 +229,40 @@ def render_final_circumferences():
     return __output_image
 
 
-def circumferences_to_polar():
+def circumferences_to_polar_and_avg_diameter():
     global __pixels_per_metric
-    points_circumferences = []
+
+    # 2 rows for each circumference: contains (polar coords, avg diameter)
+    circumferences_data = []
 
     for circumference in __circumferences:
         (contour, centroid) = circumference
+        temp_polar_coords = []
+        temp_diameters = []
 
-        temp_polar_circumference = []
         for points in contour:
             for inner in points:
                 (r, theta) = rect_to_polar(point=inner, center=centroid)
                 scaled_r = r / __pixels_per_metric
 
+                # save diameter for average
+                temp_diameters.append(scaled_r * 2)
+
+                # round and save polar coord
                 polar_coord = (round(scaled_r, 2), round(math.degrees(theta), 2))
-                temp_polar_circumference.append(polar_coord)
+                temp_polar_coords.append(polar_coord)
 
-        points_circumferences.append(temp_polar_circumference)
+        # calculate average diameter
+        temp_average_diameter = np.round(np.mean(temp_diameters), 2)
 
-    return points_circumferences
+        # save
+        circumferences_data.append((temp_polar_coords, temp_average_diameter))
+
+    return circumferences_data
 
 
 def generate_text_file(file_path):
-    polar_coords = circumferences_to_polar()
+    circumferences_data = circumferences_to_polar_and_avg_diameter()
 
     try:
         f = open(file_path, "w+")
@@ -260,9 +271,8 @@ def generate_text_file(file_path):
         f.write(get_date())
         f.write("\n")
 
-
         tags = ("Outer Circumference", "Inner Circumference")
-        for (polar_circumference, (contour, centroid), tag) in zip(polar_coords, __circumferences, tags):
+        for ((polar_coords, avg_diameter), (contour, centroid), tag) in zip(circumferences_data, __circumferences, tags):
             cx, cy = centroid
 
             # Write circumference tag
@@ -270,7 +280,7 @@ def generate_text_file(file_path):
 
             # write polar coords
             f.write("Polar coordinates:\n")
-            for (r, theta) in polar_circumference:
+            for (r, theta) in polar_coords:
                 f.write(" (%s, %s) " % (r, theta))
             f.write("\n")
 
@@ -279,8 +289,8 @@ def generate_text_file(file_path):
             f.write("\n")
 
             # write average diameter
-            # f.write("Average Diameter |%s|" % average_diameter(i, array))
-            # f.write("\n")
+            f.write("Average Diameter: %s" % avg_diameter)
+            f.write("\n")
 
             f.write("\n")
 
@@ -288,6 +298,7 @@ def generate_text_file(file_path):
         return True
 
     except:
+        print("error generating file")
         return False
 
 
@@ -342,8 +353,8 @@ def reset_bsc_backend():
 
 
 if __name__ == "__main__":
-    print(process_image("C:/Users/arosa/PycharmProjects/BambooScanner/test8.jpg"))
+    print(process_image("C:/Users/arosa/PycharmProjects/BambooScanner/test8.jpg", 800))
     set_pixels_per_metric(5.0)
     # print(circumferences_to_polar())
     # render_all_circumferences()
-    generate_text_file("blabbla")
+    generate_text_file("C:/Users/arosa/PycharmProjects/BambooScanner/BSC_test.txt")
