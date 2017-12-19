@@ -15,55 +15,69 @@ class PickCircumferencesBSC(Frame):
         self.bind("<<ShowFrame>>", self.on_show_frame)
 
     def initialize_widgets(self):
+
         # Watchers
+
         # Update state of navigation buttons
         self.current_circumference_var = IntVar()
         self.current_circumference_var.trace("w", self.update_navigation)
 
         # Update buttons
-        self.selected_count_var = StringVar()
-        self.selected_count_var.set(str(len(self.selected_circumferences)) + " of 2 selected")
-        self.selected_count_var.trace("w", self.update_buttons)
+        self.selected_count_text = StringVar()
+        # Update count label
+        self.selected_count_var = IntVar()
+        self.selected_count_var.trace("w", self.update_count_text)
+        self.selected_count_var.set(0)
+        # set here to avoid trigerring update buttons during init
+        self.selected_count_text.trace("w", self.update_buttons)
 
-        # title of ref object image
+        # title of circumference image
         self.circumference_title_var = StringVar()
-        self.circumference_title = Label(self, textvariable=self.circumference_title_var, font=self.controller.bold_font)
-        self.circumference_title.grid(row=0, column=0)
-
-        # Controls to navigate circumferences
-        self.prev_button = GreenButton(self, text="Previous",
-                                       command=lambda: self.show_circumference(self.current_circumference_var.get() - 1))
-        self.prev_button.grid(row=0, column=1, sticky=E)
-
-        self.next_button = GreenButton(self, text="Next",
-                                       command=lambda: self.show_circumference(self.current_circumference_var.get() + 1))
-        self.next_button.grid(row=0, column=2, sticky=W)
+        self.circumference_title = Label(self, textvariable=self.circumference_title_var, font=self.controller.header_font)
+        self.circumference_title.grid(row=0, column=0, columnspan=2, pady=20)
 
         # Image
-        self.image_container = Label(self, width=400, height=400)
-        self.image_container.grid(row=1, column=0, columnspan=3)
+        self.image_container = Label(self)
+        self.image_container.grid(row=1, column=0, rowspan=3, columnspan=2)
 
-        # Selection count
-        self.selected_count = Label(self, textvariable=self.selected_count_var)
-        self.selected_count.grid(row=1, column=2)
+        # instructions
+        instructions_text = "More than 2 circumferences were found.\n"
+        instructions_text += "Choose the most appropriate ones."
+        self.instructions = Label(self, text=instructions_text, relief=GROOVE)
+        self.instructions.grid(row=1, column=2, columnspan=2)
+
+        # Controls to navigate contours
+        self.prev_button = GreenButton(self, text="Previous contour", image=self.controller.arrow_left, compound=LEFT,
+                                       command=lambda: self.show_circumference(self.current_circumference_var.get() - 1))
+        self.prev_button.grid(row=4, column=0, sticky=E, padx=5, pady=20)
+
+        self.next_button = GreenButton(self, text="Next contour", image=self.controller.arrow_right, compound=RIGHT,
+                                       command=lambda: self.show_circumference(self.current_circumference_var.get() + 1))
+        self.next_button.grid(row=4, column=1, sticky=W, padx=5, pady=20)
 
         # remove button
-        self.remove_button = RedButton(self, text="Remove", command=self.remove)
-        self.remove_button.grid(row=2, column=0, columnspan=2)
+        self.remove_button = RedButton(self, text="Deselect circumference", command=self.deselect)
+        self.remove_button.grid(row=2, column=2, columnspan=2)
 
         # select button
-        self.select_button = GreenButton(self, text="Select", command=self.select)
-        self.select_button.grid(row=2, column=0, columnspan=2)
+        self.select_button = YellowButton(self, text="Use this circumference", command=self.select)
+        self.select_button.grid(row=2, column=2, columnspan=2)
+
+        # Selection count
+        self.selected_count = Label(self, textvariable=self.selected_count_text, font=self.controller.important_font)
+        self.selected_count.grid(row=3, column=2, columnspan=2, sticky=N)
 
         # confirm button
         self.confirm_button = YellowButton(self, text="CONFIRM", command=self.confirm)
-        self.confirm_button.grid(row=2, column=3, sticky=E, padx=10)
+        self.confirm_button.grid(row=4, column=3, sticky=E, padx=10)
 
-        make_rows_responsive(self)
+        # make_rows_responsive(self)
         make_columns_responsive(self)
 
     def on_show_frame(self, event=None):
         self.images = render_all_circumferences()
+        # generate selected flags
+        self.selected_circumferences = [False] * len(self.images)
         self.show_circumference(0)
         self.update_confirm_button()
 
@@ -97,7 +111,7 @@ class PickCircumferencesBSC(Frame):
         self.update_confirm_button()
 
     def update_select_remove_buttons(self):
-        if self.current_circumference_var.get() in self.selected_circumferences:
+        if self.selected_circumferences[self.current_circumference_var.get()]:
             # this one is selected; show remove button
             self.select_button.grid_remove()
             self.remove_button.grid()
@@ -108,25 +122,42 @@ class PickCircumferencesBSC(Frame):
 
     def update_confirm_button(self):
         # Toggle confirm button
-        if len(self.selected_circumferences) == 2:
+        if self.selected_count_var.get() == 2:
             self.confirm_button.grid()
         else:
             self.confirm_button.grid_remove()
 
-    def remove(self):
-        # delete last element
-        del self.selected_circumferences[self.current_circumference_var.get()]
-        self.selected_count_var.set(str(len(self.selected_circumferences)) + " of 2 selected")
+    def update_count_text(self, *args):
+        # update label text
+        self.selected_count_text.set(str(self.selected_count_var.get()) + " of 2 selected")
+
+    def deselect(self):
+        # deselect
+        self.selected_circumferences[self.current_circumference_var.get()] = False
+
+        # Decrease count
+        self.selected_count_var.set(self.selected_count_var.get() - 1)
 
     def select(self):
-        # add to selected
-        self.selected_circumferences.append(self.current_circumference_var.get())
-        self.selected_count_var.set(str(len(self.selected_circumferences)) + " of 2 selected")
+        # mark as selected
+        self.selected_circumferences[self.current_circumference_var.get()] = True
+
+        # Increase count
+        self.selected_count_var.set(self.selected_count_var.get() + 1)
 
     def confirm(self):
-        set_final_circumferences(self.selected_circumferences)
+        selected = []
+
+        for index, selected_flag in enumerate(self.selected_circumferences):
+            if selected_flag:
+                selected.append(index)
+
+        # Apply in backend
+        set_final_circumferences(selected)
+
         # Show results
         self.controller.show_frame("ResultsBSC")
 
     def reset(self):
-        pass
+        self.selected_count_var.set(0)
+        self.selected_circumferences = []

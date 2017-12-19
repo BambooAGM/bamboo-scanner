@@ -17,11 +17,13 @@ __output_image = None
 
 # STEP 1: find reference object
 # STEP 2: find circumferences
-def process_image(image_path):
+def process_image(image_path, new_h):
     """
     Finds contours that may be possible reference objects.
 
     :param image_path: path to source image in filesystem.
+    :param new_w: width to resize image
+    :param new_h: height to resize image
     :return: Number of contour boxes, and sends the GUI the 1st box.
     """
     global __image_path, __original_image, __contour_boxes, __circumferences
@@ -37,7 +39,7 @@ def process_image(image_path):
     # TODO needs rezise? width or height?
 
     # resize
-    __original_image = resize(__original_image, width=700)
+    __original_image = resize(__original_image, height=new_h)
 
     # Reduce background noise and apply canny edge detection
     temp_image = do_pre_processing(__original_image)
@@ -129,29 +131,39 @@ def render_box(index):
 
     # Midpoints
     # Forms vertical bisection
-    (tltrX, tltrY) = midpoint(tl, tr)  # top-left and top-right
-    (blbrX, blbrY) = midpoint(bl, br)  # bottom-left and bottom-right
+    (tl_tr_x, tl_tr_y) = midpoint(tl, tr)  # top-left and top-right
+    (bl_br_x, bl_br_y) = midpoint(bl, br)  # bottom-left and bottom-right
 
     # Forms horizontal bisection
-    (tlblX, tlblY) = midpoint(tl, bl)  # top-left and bottom-left
-    (trbrX, trbrY) = midpoint(tr, br)  # top-right and bottom-right
+    (tl_bl_x, tl_bl_y) = midpoint(tl, bl)  # top-left and bottom-left
+    (tr_br_x, tr_br_y) = midpoint(tr, br)  # top-right and bottom-right
 
     # 2nd output image; Here is where the images deviate
     orig_vertical_line = orig_horizontal_line.copy()
 
     # draw the midpoints on the image
-    cv2.circle(orig_vertical_line, (int(tltrX), int(tltrY)), 5, (255, 0, 0), -1)
-    cv2.circle(orig_vertical_line, (int(blbrX), int(blbrY)), 5, (255, 0, 0), -1)
-    cv2.circle(orig_horizontal_line, (int(tlblX), int(tlblY)), 5, (255, 0, 0), -1)
-    cv2.circle(orig_horizontal_line, (int(trbrX), int(trbrY)), 5, (255, 0, 0), -1)
+    cv2.circle(orig_vertical_line, (int(tl_tr_x), int(tl_tr_y)), 5, (255, 0, 0), -1)
+    cv2.circle(orig_vertical_line, (int(bl_br_x), int(bl_br_y)), 5, (255, 0, 0), -1)
+    cv2.circle(orig_horizontal_line, (int(tl_bl_x), int(tl_bl_y)), 5, (255, 0, 0), -1)
+    cv2.circle(orig_horizontal_line, (int(tr_br_x), int(tr_br_y)), 5, (255, 0, 0), -1)
 
     # draw lines between the midpoints
-    cv2.line(orig_vertical_line, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)), (255, 0, 255), 2)
-    cv2.line(orig_horizontal_line, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)), (255, 0, 255), 2)
+    cv2.line(orig_vertical_line, (int(tl_tr_x), int(tl_tr_y)), (int(bl_br_x), int(bl_br_y)), (255, 0, 255), 2)
+    cv2.line(orig_horizontal_line, (int(tl_bl_x), int(tl_bl_y)), (int(tr_br_x), int(tr_br_y)), (255, 0, 255), 2)
+
+    # draw text on midpoint of lines
+    # vertical
+    (m_vertical_x, m_vertical_y) = midpoint((tl_tr_x, tl_tr_y), (bl_br_x, bl_br_y))
+    cv2.putText(orig_vertical_line, "X", (int(m_vertical_x - 5), int(m_vertical_y)),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 255), 2)
+    # horizontal
+    (m_horizontal_x, m_horizontal_y) = midpoint((tl_bl_x, tl_bl_y), (tr_br_x, tr_br_y))
+    cv2.putText(orig_horizontal_line, "X", (int(m_horizontal_x), int(m_horizontal_y + 5)),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 255), 2)
 
     # compute the Euclidean distance between the midpoints
-    box_height = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
-    box_width = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
+    box_height = dist.euclidean((tl_tr_x, tl_tr_y), (bl_br_x, bl_br_y))
+    box_width = dist.euclidean((tl_bl_x, tl_bl_y), (tr_br_x, tr_br_y))
 
     result = {
         "horizontal": (convert_cv_to_tk(orig_horizontal_line), box_width),

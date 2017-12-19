@@ -1,7 +1,7 @@
 from tkinter import filedialog, messagebox
 from tkinter import *
 from backend.bsc import *
-from gui.widgets.custom import YellowButton
+from gui.widgets.custom import YellowButton, GreenButton
 from gui.widgets.grid_helpers import make_rows_responsive, make_columns_responsive
 from utils import resize_keep_aspect
 
@@ -11,7 +11,7 @@ class ConfigBSC(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-        self.title = "Slice Characterization"
+        self.title = "Select an image of a bamboo slice"
         self.initialize_widgets()
         self.bind("<<ShowFrame>>", self.on_show_frame)
 
@@ -22,27 +22,29 @@ class ConfigBSC(Frame):
         self.image_path = StringVar()
         self.image_path.trace("w", self.update_begin_button)
 
-        # image to be processed
-        self.image_label = StringVar()
-        self.image_label.set("Click below to browse for an image")
-        self.placeholder_image = ImageTk.PhotoImage(Image.open("assets/placeholder_image.png"))
-        self.image_container = Label(self, image=self.placeholder_image, textvariable=self.image_label,
-                                     font=self.controller.bold_font, compound=BOTTOM, pady=10)
+        # choose image button
+        self.choose_button = GreenButton(self, text="Choose image", command=self.load_image)
+        self.choose_button.grid(row=0, column=0, sticky=SE, padx=10, pady=20)
 
-        # bind to click event
-        self.image_container.bind("<Button-1>", self.load_image)
-        self.image_container.grid(row=0, column=0, columnspan=2, sticky=NSEW)
+        # selected image path
+        self.path_entry = Entry(self, textvariable=self.image_path, state="readonly")
+        self.path_entry.grid(row=0, column=1, sticky=S+E+W, pady=20)
+
+        # image to be processed
+        self.placeholder_image = ImageTk.PhotoImage(Image.open("assets/placeholder_image.png"))
+        self.image_container = Label(self, image=self.placeholder_image)
+        self.image_container.grid(row=1, column=0, columnspan=2, sticky=N)
 
         # begin button
-        self.begin_button = YellowButton(self, text="BEGIN", command=self.begin)
-        self.begin_button.grid(row=1, column=1, sticky=E, padx=10)
+        self.begin_button = YellowButton(self, text="BEGIN", command=self.begin, image=self.controller.arrow_right, compound=RIGHT)
+        self.begin_button.grid(row=2, column=2, sticky=E, padx=10)
 
-        make_rows_responsive(self)
+        # make_rows_responsive(self)
         make_columns_responsive(self)
 
-    def load_image(self, event):
+    def load_image(self):
         # open a file chooser dialog and allow the user to select a source image
-        temp_path = filedialog.askopenfilename(title="Select an image",
+        temp_path = filedialog.askopenfilename(title="Select an image to process",
                                                filetypes=(("All files", "*.*"),
                                                           ("PNG", "*.png"),
                                                           ("JPEG", "*.jpg")))
@@ -61,16 +63,17 @@ class ConfigBSC(Frame):
 
             # update image container
             self.image_container.configure(image=self.tk_image)
-            self.image_label.set("Image to be processed")
 
     def update_begin_button(self, *args):
         if self.image_path.get():
             self.begin_button.grid()
+            self.path_entry.grid()
         else:
             self.begin_button.grid_remove()
+            self.path_entry.grid_remove()
 
     def begin(self):
-        status = process_image(self.image_path.get())
+        status = process_image(self.image_path.get(), new_h=self.image.height)
 
         if status == "OK":
             # Go to results page
@@ -88,5 +91,4 @@ class ConfigBSC(Frame):
         # update the container before removing the image reference
         self.image_container.configure(image=self.placeholder_image)
         self.image = None
-        self.image_label.set("Click below to browse for an image")
         self.image_path.set("")

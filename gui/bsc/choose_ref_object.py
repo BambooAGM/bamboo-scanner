@@ -9,7 +9,7 @@ class RefObjectBSC(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-        self.title = "Configure the image's scale"
+        self.title = "Configure the reference object"
         self.initialize_widgets()
         self.bind("<<ShowFrame>>", self.on_show_frame)
 
@@ -18,7 +18,7 @@ class RefObjectBSC(Frame):
         # Update state of navigation buttons
         self.current_contour_var = IntVar()
         self.current_contour_var.trace("w", self.update_navigation)
-        
+
         # Switch between horizontal and vertical bisections
         self.dimension_type = StringVar()
         self.dimension_type.set("horizontal")
@@ -30,44 +30,52 @@ class RefObjectBSC(Frame):
 
         # title of ref object image
         self.ref_object_var = StringVar()
-        self.ref_object_title = Label(self, textvariable=self.ref_object_var, font=self.controller.bold_font)
-        self.ref_object_title.grid(row=0, column=0)
-
-        # Controls to navigate contours
-        self.prev_button = GreenButton(self, text="Previous", command=lambda: self.show_contour(self.current_contour_var.get() - 1))
-        self.prev_button.grid(row=0, column=1, sticky=E)
-
-        self.next_button = GreenButton(self, text="Next", command=lambda: self.show_contour(self.current_contour_var.get() + 1))
-        self.next_button.grid(row=0, column=2, sticky=W)
+        self.ref_object_title = Label(self, textvariable=self.ref_object_var, font=self.controller.header_font)
+        self.ref_object_title.grid(row=0, column=0, columnspan=2, pady=20)
 
         # Image
-        self.image_container = Label(self, width=400, height=400)
-        self.image_container.grid(row=0, column=0, rowspan=4, columnspan=3)
+        self.image_container = Label(self)
+        self.image_container.grid(row=1, column=0, rowspan=6, columnspan=2)
+
+        # instructions
+        instructions_text = "The reference object should be a figure for which its width or height is known.\n"
+        instructions_text += "This will allow the program to calculate the real dimensions of the bamboo slice."
+        self.instructions = Label(self, text=instructions_text, relief=GROOVE)
+        self.instructions.grid(row=1, column=2, columnspan=2)
 
         # select dimension to enter for the reference object
-        self.dimension_label = Label(self, text="Select the dimension you will provide for the reference object.")
-        self.dimension_label.grid(row=0, column=3, columnspan=2)
+        self.dimension_label = Label(self, text="Dimension I'm providing:", font=self.controller.header_font)
+        self.dimension_label.grid(row=2, column=2)
         self.dimension_width = Radiobutton(self, text="Width", variable=self.dimension_type, value="horizontal")
         self.dimension_height = Radiobutton(self, text="Height", variable=self.dimension_type, value="vertical")
-        self.dimension_width.grid(row=1, column=3, sticky=NE)
-        self.dimension_height.grid(row=1, column=4, sticky=NW)
+        self.dimension_width.grid(row=3, column=2)
+        self.dimension_height.grid(row=4, column=2)
 
         # user entered dimension (for pixels-per-metric)
-        self.real_dimension_label = Label(self, text="Real dimension in centimeters")
-        self.real_dimension_label.grid(row=2, column=3, columnspan=2)
+        self.real_dimension_label = Label(self, text="Dimension in centimeters:", font=self.controller.header_font)
+        self.real_dimension_label.grid(row=5, column=2, pady=20)
 
         # %d = Type of action (1=insert, 0=delete, -1 for others)
         # %P = value of the entry if the edit is allowed
         # %S = the text string being inserted or deleted, if any
-        vcmd = (self.register(self.validate_float), '%d', '%P', '%S')
-        self.real_dimension = Entry(self, textvariable=self.real_dimension_var, validate="key", validatecommand=vcmd)
-        self.real_dimension.grid(row=3, column=3, columnspan=2)
+        validate_cmd = (self.register(self.validate_float), '%d', '%P', '%S')
+        self.real_dimension = Entry(self, textvariable=self.real_dimension_var, validate="key", validatecommand=validate_cmd)
+        self.real_dimension.grid(row=6, column=2)
+
+        # Controls to navigate contours
+        self.prev_button = GreenButton(self, text="Previous contour", image=self.controller.arrow_left, compound=LEFT,
+                                       command=lambda: self.show_contour(self.current_contour_var.get() - 1))
+        self.prev_button.grid(row=7, column=0, sticky=NE, padx=5, pady=20)
+
+        self.next_button = GreenButton(self, text="Next contour", image=self.controller.arrow_right, compound=RIGHT,
+                                       command=lambda: self.show_contour(self.current_contour_var.get() + 1))
+        self.next_button.grid(row=7, column=1, sticky=NW, padx=5, pady=20)
 
         # confirm button
         self.confirm_button = YellowButton(self, text="CONFIRM", command=self.confirm)
-        self.confirm_button.grid(row=4, column=4, sticky=E, padx=10)
+        self.confirm_button.grid(row=7, column=3, sticky=E, padx=10)
 
-        make_rows_responsive(self)
+        # make_rows_responsive(self)
         make_columns_responsive(self)
 
     def on_show_frame(self, event=None):
@@ -139,4 +147,5 @@ class RefObjectBSC(Frame):
             self.controller.show_frame("ResultsBSC")
 
     def reset(self):
-        pass
+        # reset real dimension entry field
+        self.real_dimension_var.set("")

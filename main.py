@@ -22,6 +22,7 @@ class BambooScanner(Tk):
         self.global_font_family = font.Font(family="Segoe UI Emoji")
         self.common_font = font.Font(family="Segoe UI Emoji", size=14)
         self.bold_font = font.Font(family="Segoe UI Emoji", size=13, weight="bold")
+        self.header_font = font.Font(family="Segoe UI Emoji", size=16, weight="bold")
         self.title_font = font.Font(family="Segoe UI Emoji", size=28, weight="bold")
         self.important_font = font.Font(family="Segoe UI Emoji", size=28, weight="bold", underline=True)
 

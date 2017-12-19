@@ -41,7 +41,7 @@ class MeasureBPC(Frame):
         self.capture_button.grid(row=2, column=1, sticky=N)
 
         # view results button
-        self.results_button = GreenButton(self, text="VIEW RESULTS", command=self.view_results,
+        self.results_button = GreenButton(self, text="View Results", command=self.view_results,
                                           image=self.controller.arrow_right, compound=RIGHT)
         self.results_button.grid(row=3, column=1)
 
