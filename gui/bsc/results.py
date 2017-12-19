@@ -32,9 +32,7 @@ class ResultsBSC(Frame):
         make_columns_responsive(self)
 
     def on_show_frame(self, event=None):
-        # update page title
-        self.controller.update_page_title(self.title)
-
+        # render image with all circumferences
         self.image = render_final_circumferences()
         self.image_container.configure(image=self.image)
 
@@ -47,19 +45,22 @@ class ResultsBSC(Frame):
             if generate_text_file(save_path):
                 # all good
                 messagebox.showinfo("Success!", "File was generated successfully.")
-                self.restart_bsc()
+                # reset BSC
+                self.controller.reset_BSC()
+                # go to BSC Configuration page
+                self.controller.show_frame("ConfigBSC")
             else:
                 messagebox.showerror("Error generating text file", "Make sure you have access to the selected destination.")
 
     def discard(self):
         result = messagebox.askokcancel("Discard results?", "All progress will be lost.", default="cancel", icon="warning")
         if result:
-            self.restart_bsc()
+            # reset BSC
+            self.controller.reset_BSC()
+            # go to BSC Configuration page
+            self.controller.show_frame("ConfigBSC")
 
-    def restart_bsc(self):
+    def reset(self):
         # Clear result image
         self.image_container.configure(image=None)
         self.image = None
-
-        # go to BSC Configuration page
-        self.controller.show_frame("ConfigBSC")

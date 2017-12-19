@@ -19,7 +19,7 @@ def get_date():
     return date
 
 
-def resize_keep_aspect(w, h, max_w, max_h, image):
+def resize_keep_aspect(image, w, h, max_w, max_h):
     """
     Resize an image while keeping aspect ratio.
 

@@ -49,8 +49,6 @@ class MeasureBPC(Frame):
         make_columns_responsive(self)
 
     def on_show_frame(self, event=None):
-        # update page title
-        self.controller.update_page_title(self.title)
         #TODO update count label
         # bpc.get_number_captured()
         self.update_results_button()
@@ -96,3 +94,7 @@ class MeasureBPC(Frame):
 
     def view_results(self):
         self.controller.show_frame("ResultsBPC")
+
+    def reset(self):
+        # reset captured count
+        self.count_number.set(0)

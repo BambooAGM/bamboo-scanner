@@ -71,8 +71,6 @@ class RefObjectBSC(Frame):
         make_columns_responsive(self)
 
     def on_show_frame(self, event=None):
-        # update page title
-        self.controller.update_page_title(self.title)
         # fetch 1st contour
         self.boxes_len = get_number_contours()
         self.show_contour(0)

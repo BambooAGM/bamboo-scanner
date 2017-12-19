@@ -320,7 +320,7 @@ def midpoint(ptA, ptB):
     return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
 
 
-def reset_backend():
+def reset_bsc_backend():
     global __original_image, __pixels_per_metric, __contour_boxes, __circumferences, __output_image
     __original_image = None
     __pixels_per_metric = None

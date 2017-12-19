@@ -10,7 +10,6 @@ class ConfigBPC(Frame):
         self.controller = controller
         self.title = "Pole Characterization"
         self.initialize_widgets()
-        self.bind("<<ShowFrame>>", self.on_show_frame)
 
     def initialize_widgets(self):
         # text area label
@@ -34,12 +33,6 @@ class ConfigBPC(Frame):
         #bpc.set_description(text)
         self.controller.show_frame("MeasureBPC")
 
-    def on_show_frame(self, event=None):
-        # update page title
-        self.controller.update_page_title(self.title)
-        # reset state
-        self.reset()
-
     def reset(self):
+        # reset description
         self.text_area.text.delete(1.0, END)
-        #reset_backend()

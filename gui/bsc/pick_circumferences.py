@@ -9,7 +9,7 @@ class PickCircumferencesBSC(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-        self.title = "Select circumferences"
+        self.title = "Select Circumferences"
         self.selected_circumferences = []
         self.initialize_widgets()
         self.bind("<<ShowFrame>>", self.on_show_frame)
@@ -32,11 +32,11 @@ class PickCircumferencesBSC(Frame):
 
         # Controls to navigate circumferences
         self.prev_button = GreenButton(self, text="Previous",
-                                       command=lambda: self.show_contour(self.current_circumference_var.get() - 1))
+                                       command=lambda: self.show_circumference(self.current_circumference_var.get() - 1))
         self.prev_button.grid(row=0, column=1, sticky=E)
 
         self.next_button = GreenButton(self, text="Next",
-                                       command=lambda: self.show_contour(self.current_circumference_var.get() + 1))
+                                       command=lambda: self.show_circumference(self.current_circumference_var.get() + 1))
         self.next_button.grid(row=0, column=2, sticky=W)
 
         # Image
@@ -63,13 +63,11 @@ class PickCircumferencesBSC(Frame):
         make_columns_responsive(self)
 
     def on_show_frame(self, event=None):
-        # update page title
-        self.controller.update_page_title(self.title)
         self.images = render_all_circumferences()
-        self.show_contour(0)
+        self.show_circumference(0)
         self.update_confirm_button()
-    
-    def show_contour(self, index):
+
+    def show_circumference(self, index):
         self.current_circumference_var.set(index)
         image = self.images[index]
         # update image container

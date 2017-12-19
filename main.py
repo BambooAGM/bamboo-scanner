@@ -1,6 +1,7 @@
 from tkinter import font, messagebox
 from tkinter import *
 from PIL import ImageTk, Image
+from backend.bsc import reset_bsc_backend
 from gui.home import Home
 from gui.bsc.choose_image import ConfigBSC
 from gui.bsc.choose_ref_object import RefObjectBSC
@@ -63,9 +64,13 @@ class BambooScanner(Tk):
         self.arrow_right = ImageTk.PhotoImage(Image.open("assets/arrow_right.png"))
         self.save_icon = ImageTk.PhotoImage(Image.open("assets/save.png"))
 
+        # The class names for both BSC and BPC
+        self.bsc_frames = (ConfigBSC, RefObjectBSC, PickCircumferencesBSC, ResultsBSC)
+        self.bpc_frames = (ConfigBPC, MeasureBPC, ResultsBPC)
+
         # Initialize all pages and keep their references accessible
         self.frames = {}
-        for F in (Home, ConfigBPC, MeasureBPC, ResultsBPC, ConfigBSC, RefObjectBSC, PickCircumferencesBSC, ResultsBSC):
+        for F in (() + (Home,) + self.bsc_frames + self.bpc_frames):
             page_name = F.__name__
             frame = F(parent=self.container, controller=self)
             self.frames[page_name] = frame
@@ -79,15 +84,27 @@ class BambooScanner(Tk):
 
         # Start on the home page
         self.active_frame = None
-        self.go_home(None)
+        self.show_frame("Home")
 
     def go_home(self, event):
-        # TODO manage when unsaved results
-        self.show_frame("Home")
+        result = messagebox.askokcancel("Unsaved progress will be lost", "If you leave now, all progress will be lost.",
+                                        default="cancel", icon="warning")
+
+        if result:
+            # Reset the tool we were using
+            # came from BPC
+            if type(self.active_frame) in self.bpc_frames:
+                self.reset_BPC()
+            # came from BSC
+            else:
+                self.reset_BSC()
+
+            # go home
+            self.show_frame("Home")
 
     def show_frame(self, page_name):
         """
-        Switch to the specified page
+        Raise a "leave" event on the current frame, a "show" event on the new one, and display it.
 
         :param page_name: class name of destination frame
         """
@@ -98,6 +115,11 @@ class BambooScanner(Tk):
 
         # Switch to new active frame
         self.active_frame = self.frames[page_name]
+
+        # update page title, except for Home page
+        if type(self.active_frame) != Home:
+            self.update_page_title(self.active_frame.title)
+
         self.active_frame.update()
         self.active_frame.event_generate("<<ShowFrame>>")
         self.active_frame.tkraise()
@@ -118,6 +140,31 @@ class BambooScanner(Tk):
 
     def restore_navbar(self):
         self.navbar.grid()
+
+    def reset_BPC(self):
+        """
+        Reset all the BPC GUI frames and its backend module
+        """
+        # reset GUI
+        for frame in self.bpc_frames:
+            name = frame.__name__
+            self.frames[name].reset()
+
+        # reset backend
+        # reset_bpc_backend()
+
+    def reset_BSC(self):
+        """
+        Reset all the BSC GUI frames and its backend module
+        """
+        # reset GUI
+        for frame in self.bsc_frames:
+            name = frame.__name__
+            self.frames[name].reset()
+
+        # reset backend
+        reset_bsc_backend()
+
 
 if __name__ == "__main__":
     def exit_handler():

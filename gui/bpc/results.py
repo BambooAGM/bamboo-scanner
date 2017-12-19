@@ -1,4 +1,5 @@
-from tkinter import messagebox
+from datetime import datetime
+from tkinter import filedialog, messagebox
 from tkinter import *
 from gui.widgets.grid_helpers import make_columns_responsive, make_rows_responsive
 from gui.widgets.custom import TableLeftHeaders, GreenButton, YellowButton, RedButton
@@ -14,6 +15,7 @@ class ResultsBPC(Frame):
         self.sensor_headers = ["Z (cm)", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11", "S12"]
         self.initialize_widgets()
         self.bind("<<ShowFrame>>", self.on_show_frame)
+        self.bind("<<LeaveFrame>>", self.on_leave_frame)
 
     def initialize_widgets(self):
         # Go back button
@@ -34,9 +36,6 @@ class ResultsBPC(Frame):
         make_columns_responsive(self)
 
     def on_show_frame(self, event=None):
-        # update page title
-        self.controller.update_page_title(self.title)
-
         # TODO fetch from backend
         self.captured_data = [
             ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
@@ -72,21 +71,44 @@ class ResultsBPC(Frame):
         self.destroy_table()
         self.create_table()
 
-    def go_back(self):
+    def on_leave_frame(self, event=None):
+        # Destroy captured measurements table
         self.destroy_table()
+
+    def go_back(self):
         self.controller.show_frame("MeasureBPC")
 
     def save(self):
-        # TODO generate text file and show confirmation
-        self.restart_bpc()
+        date = datetime.now().strftime('%Y-%m-%d_%H%M%S')
+        save_path = filedialog.asksaveasfilename(title="Save as", defaultextension=".txt", initialfile="BPC_" + date)
+
+        # make sure the user didn't cancel the dialog
+        if len(save_path) > 0:
+            # reset BPC
+            self.controller.reset_BPC()
+            # Go to BPC configuration page
+            self.controller.show_frame("ConfigBPC")
+
+            # uncomment when integrated
+            # if generate_text_file(save_path):
+            #     # all good
+            #     messagebox.showinfo("Success!", "File was generated successfully.")
+            #     # reset BPC
+            #     self.controller.reset_BPC()
+            #     # Go to BPC configuration page
+            #     self.controller.show_frame("ConfigBPC")
+            # else:
+            #     messagebox.showerror("Error generating text file", "Make sure you have access to the selected destination.")
 
     def discard(self):
         result = messagebox.askokcancel("Discard captured measurements?", "You will lose all the measurements you have captured so far.",
                              default="cancel", icon="warning")
         if result:
-            self.restart_bpc()
+            # reset BPC
+            self.controller.reset_BPC()
+            # Go to BPC configuration page
+            self.controller.show_frame("ConfigBPC")
 
-    def restart_bpc(self):
-        # TODO cleanup??
-        # go to BPC Configuration page
-        self.controller.show_frame("ConfigBPC")
+    def reset(self):
+        # must provide this method because master Tk widget calls reset on all the frames.
+        pass

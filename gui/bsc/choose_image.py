@@ -33,19 +33,12 @@ class ConfigBSC(Frame):
         self.image_container.bind("<Button-1>", self.load_image)
         self.image_container.grid(row=0, column=0, columnspan=2, sticky=NSEW)
 
-        # self.path_entry = Entry(self, textvariable=self.image_path, state="readonly")
-        # self.path_entry.grid(row=0, column=2, columnspan=2, sticky=EW)
-
         # begin button
         self.begin_button = YellowButton(self, text="BEGIN", command=self.begin)
         self.begin_button.grid(row=1, column=1, sticky=E, padx=10)
 
         make_rows_responsive(self)
         make_columns_responsive(self)
-
-
-
-
 
     def load_image(self, event):
         # open a file chooser dialog and allow the user to select a source image
@@ -63,9 +56,7 @@ class ConfigBSC(Frame):
 
             # create a Tkinter-compatible photo image
             self.image = Image.open(temp_path)
-            self.image = resize_keep_aspect(self.image.width, self.image.height, 800, 800, self.image)
-
-            # self.image = self.image.resize((600, 600))
+            self.image = resize_keep_aspect(self.image, self.image.width, self.image.height, 800, 800)
             self.tk_image = ImageTk.PhotoImage(self.image)
 
             # update image container
@@ -91,10 +82,6 @@ class ConfigBSC(Frame):
             self.image_path.set("")
 
     def on_show_frame(self, event=None):
-        # update page title
-        self.controller.update_page_title(self.title)
-        # reset state
-        self.reset()
         self.update_begin_button()
 
     def reset(self):
@@ -103,4 +90,3 @@ class ConfigBSC(Frame):
         self.image = None
         self.image_label.set("Click below to browse for an image")
         self.image_path.set("")
-        reset_backend()
