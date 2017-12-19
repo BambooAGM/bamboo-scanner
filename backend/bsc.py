@@ -47,7 +47,7 @@ def process_image(image_path, new_h):
     # find contours
     # mode:
     # method:
-    _, cnts, _ = cv2.findContours(image=temp_image, mode=cv2.RETR_LIST, method=cv2.CHAIN_APPROX_SIMPLE)
+    _, cnts, _ = cv2.findContours(image=temp_image, mode=cv2.RETR_LIST, method=cv2.CHAIN_APPROX_NONE)
     # sort contours from left to right
     (cnts, _) = contours.sort_contours(cnts)
 
@@ -57,13 +57,8 @@ def process_image(image_path, new_h):
         area = cv2.contourArea(c)
 
         # ignore small contours
-        if area < 100:
+        if area < 500:
             continue
-
-        # skip duplicates
-        if last_valid_area is not None and last_valid_area - area < 500:
-            continue
-        last_valid_area = area
 
         # compute the rotated bounding box of the contour
         box = cv2.minAreaRect(c)
@@ -83,7 +78,7 @@ def process_image(image_path, new_h):
         perimeter = cv2.arcLength(c, closed=True)
         approx = cv2.approxPolyDP(c, epsilon=0.01 * perimeter, closed=True)
 
-        if len(approx) > 8:
+        if len(approx) > 10 and len(approx) < 20:
             # get centroid
             M = cv2.moments(c)
             (cx, cy) = int(M['m10'] / M['m00']), int(M['m01'] / M['m00'])
@@ -91,6 +86,8 @@ def process_image(image_path, new_h):
             # Save circumferences and centroids to render later
             circumference = (c, (cx, cy))
             __circumferences.append(circumference)
+
+    print("# of circumferences:", len(__circumferences))
 
     if len(__circumferences) >= 2:
         return "OK"
@@ -215,14 +212,14 @@ def render_final_circumferences():
     # Generate if we haven't yet
     if __output_image is None:
         output = __original_image.copy()
-        colors = ((0, 165, 255), (255, 255, 0))
+        colors = ((0, 0, 255), (255, 255, 0))
 
         for (circumference, color) in zip(__circumferences, colors):
             cnt = circumference[0]
             cx, cy = circumference[1]
 
-            cv2.drawContours(output, [cnt], 0, color=color, thickness=2)
-            cv2.circle(output, center=(cx, cy), radius=5, color=color, thickness=-1)
+            cv2.drawContours(output, [cnt], 0, color=color, thickness=1)
+            cv2.circle(output, center=(cx, cy), radius=3, color=color, thickness=-1)
 
         __output_image = convert_cv_to_tk(output)
 
@@ -316,12 +313,12 @@ def do_pre_processing(image):
 
     # OPTION 2
     # smooth out any background noise and preserve edges
-    gray = cv2.bilateralFilter(gray, d=7, sigmaColor=100, sigmaSpace=100)
+    gray = cv2.bilateralFilter(gray, d=5, sigmaColor=75, sigmaSpace=50)
 
     # perform edge detection, then perform a dilation + erosion to close gaps in between object edges
     # orig = 50, 100
     # test8: 50, 175 .. 100, 200
-    edged = cv2.Canny(gray, threshold1=50, threshold2=100)
+    edged = cv2.Canny(gray, threshold1=100, threshold2=150)
     edged = cv2.dilate(edged, kernel=None, iterations=1)
     edged = cv2.erode(edged, kernel=None, iterations=1)
 
@@ -353,8 +350,8 @@ def reset_bsc_backend():
 
 
 if __name__ == "__main__":
-    print(process_image("C:/Users/arosa/PycharmProjects/BambooScanner/test8.jpg", 800))
+    print(process_image("C:/Users/arosa/PycharmProjects/BambooScanner/test3a.jpg", 800))
     set_pixels_per_metric(5.0)
     # print(circumferences_to_polar())
     # render_all_circumferences()
-    generate_text_file("C:/Users/arosa/PycharmProjects/BambooScanner/BSC_test.txt")
+    # generate_text_file("C:/Users/arosa/PycharmProjects/BambooScanner/BSC_test.txt")

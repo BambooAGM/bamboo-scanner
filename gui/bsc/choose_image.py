@@ -37,7 +37,7 @@ class ConfigBSC(Frame):
 
         # begin button
         self.begin_button = YellowButton(self, text="BEGIN", command=self.begin, image=self.controller.arrow_right, compound=RIGHT)
-        self.begin_button.grid(row=2, column=2, sticky=E, padx=10)
+        self.begin_button.grid(row=2, column=2, sticky=E, padx=10, pady=20)
 
         # make_rows_responsive(self)
         make_columns_responsive(self)
@@ -58,7 +58,7 @@ class ConfigBSC(Frame):
 
             # create a Tkinter-compatible photo image
             self.image = Image.open(temp_path)
-            self.image = resize_keep_aspect(self.image, self.image.width, self.image.height, 800, 800)
+            self.image = resize_keep_aspect(self.image, self.image.width, self.image.height, 600, 600)
             self.tk_image = ImageTk.PhotoImage(self.image)
 
             # update image container

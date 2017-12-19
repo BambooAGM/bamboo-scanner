@@ -11,23 +11,32 @@ class ResultsBSC(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-        self.title = "Results"
+        self.title = "Slice Results"
         self.initialize_widgets()
         self.bind("<<ShowFrame>>", self.on_show_frame)
 
     def initialize_widgets(self):
+
+        # header message
+        self.result_message = Label(self, text="Final Circumferences", font=self.controller.header_font)
+        self.result_message.grid(row=0, column=0, columnspan=2, pady=20)
+
         # Result image
-        self.image_container = Label(self, width=400, height=400)
-        self.image_container.grid(row=0, columnspan=2)
+        self.image_container = Label(self)
+        self.image_container.grid(row=1, columnspan=2)
+
+        # save hint
+        self.result_message = Label(self, text="Save to see all polar coordinates.")
+        self.result_message.grid(row=2, column=0, columnspan=2, pady=20)
 
         # Save button
         self.save_button = YellowButton(self, text="SAVE", command=self.save, image=self.controller.save_icon,
                                         compound=LEFT)
-        self.save_button.grid(row=1, column=0)
+        self.save_button.grid(row=3, column=0, sticky=E, padx=5, pady=20)
 
         # Discard button
         self.discard_button = RedButton(self, text="DISCARD", command=self.discard)
-        self.discard_button.grid(row=1, column=1)
+        self.discard_button.grid(row=3, column=1, sticky=W, padx=5, pady=20)
 
         make_columns_responsive(self)
 

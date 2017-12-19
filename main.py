@@ -52,7 +52,7 @@ class BambooScanner(Tk):
         self.title = StringVar()
         self.page_title = Label(self.navbar, textvariable=self.title,
                                 bg="#35AD35", fg="#FFFFFF", font=self.title_font)
-        self.page_title.grid(row=0, column=1, sticky=W)
+        self.page_title.grid(row=0, column=1, sticky=W, padx=10)
 
         # Bamboo
         bamboo_image = ImageTk.PhotoImage(Image.open("assets/bamboo.png"))

@@ -69,7 +69,7 @@ class PickCircumferencesBSC(Frame):
 
         # confirm button
         self.confirm_button = YellowButton(self, text="CONFIRM", command=self.confirm)
-        self.confirm_button.grid(row=4, column=3, sticky=E, padx=10)
+        self.confirm_button.grid(row=5, column=3, sticky=E, padx=10)
 
         # make_rows_responsive(self)
         make_columns_responsive(self)
@@ -111,14 +111,27 @@ class PickCircumferencesBSC(Frame):
         self.update_confirm_button()
 
     def update_select_remove_buttons(self):
-        if self.selected_circumferences[self.current_circumference_var.get()]:
-            # this one is selected; show remove button
-            self.select_button.grid_remove()
-            self.remove_button.grid()
-        else:
-            # not selected; show select button
-            self.remove_button.grid_remove()
-            self.select_button.grid()
+        # only if array has been initialized
+        if len(self.selected_circumferences):
+
+            # selected
+            if self.selected_circumferences[self.current_circumference_var.get()]:
+                # this one is selected; show remove button
+                self.select_button.grid_remove()
+                self.remove_button.grid()
+
+            # not selected
+            else:
+                # show select button
+                self.remove_button.grid_remove()
+                self.select_button.grid()
+
+                # 2 already selected; disable select button
+                if self.selected_count_var.get() == 2:
+                    self.select_button.configure(state=DISABLED)
+                else:
+                    # still can select; re-enable button
+                    self.select_button.configure(state=NORMAL)
 
     def update_confirm_button(self):
         # Toggle confirm button

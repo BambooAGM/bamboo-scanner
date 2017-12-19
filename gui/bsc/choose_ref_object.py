@@ -73,7 +73,7 @@ class RefObjectBSC(Frame):
 
         # confirm button
         self.confirm_button = YellowButton(self, text="CONFIRM", command=self.confirm)
-        self.confirm_button.grid(row=7, column=3, sticky=E, padx=10)
+        self.confirm_button.grid(row=8, column=3, sticky=E, padx=10)
 
         # make_rows_responsive(self)
         make_columns_responsive(self)
@@ -139,7 +139,7 @@ class RefObjectBSC(Frame):
         ppm = self.box[self.dimension_type.get()][1] / float(self.real_dimension.get())
         set_pixels_per_metric(ppm)
 
-        if get_number_circumferences() > 1:
+        if get_number_circumferences() > 2:
             # More than 2 circumferences; must handpick
             self.controller.show_frame("PickCircumferencesBSC")
         else:
