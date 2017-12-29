@@ -1,6 +1,6 @@
 from tkinter import font
 from tkinter import *
-from gui.widgets.grid_helpers import make_columns_responsive
+from PIL import ImageTk, Image
 
 
 class YellowButton(Button):
@@ -169,3 +169,44 @@ class TableLeftHeaders(Frame):
                     result.append(column)
 
         return result
+
+
+class ResponsiveImage(Frame):
+    def __init__(self, master, image):
+        Frame.__init__(self, master)
+
+        # save image
+        self.original = image
+
+        # make frame responsive
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.image = ImageTk.PhotoImage(self.original)
+        self.display = Canvas(self, bd=0, highlightthickness=0)
+        self.display.create_image(0, 0, image=self.image, anchor=NW, tags="IMG")
+        self.display.grid(row=0, sticky=NSEW)
+
+        # Main frame fills master
+        # self.pack(fill=BOTH, expand=1)
+        # the magic
+        self.bind("<Configure>", self.resize)
+
+    def resize(self, event):
+        size = (event.width, event.height)
+        resized = self.original.resize(size)
+        self.image = ImageTk.PhotoImage(resized)
+        self.display.delete("IMG")
+        self.display.create_image(0, 0, image=self.image, anchor=NW, tags="IMG")
+
+
+    # def change_image(self, image):
+    #     self.original = image
+    #     self.image = ImageTk.PhotoImage(self.original)
+    #     self.display.delete("IMG")
+    #     self.display.create_image(0, 0, image=self.image, anchor=NW, tags="IMG")
+
+
+if __name__ == "__main__":
+    root = Tk()
+    app = ResponsiveImage(root)
+    app.mainloop()

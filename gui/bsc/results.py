@@ -2,7 +2,7 @@ from datetime import datetime
 from tkinter import filedialog, messagebox
 from tkinter import *
 from backend.bsc import *
-from gui.widgets.custom import RedButton, YellowButton
+from gui.widgets.custom import RedButton, YellowButton, ResponsiveImage
 from gui.widgets.grid_helpers import make_columns_responsive
 
 
@@ -22,8 +22,8 @@ class ResultsBSC(Frame):
         self.result_message.grid(row=0, column=0, columnspan=2, pady=20)
 
         # Result image
-        self.image_container = Label(self)
-        self.image_container.grid(row=1, columnspan=2)
+        # self.image_container = Label(self)
+        # self.image_container.grid(row=1, columnspan=2)
 
         # save hint
         self.result_message = Label(self, text="Save to see all polar coordinates.")
@@ -43,7 +43,9 @@ class ResultsBSC(Frame):
     def on_show_frame(self, event=None):
         # render image with all circumferences
         self.image = render_final_circumferences()
-        self.image_container.configure(image=self.image)
+        # self.image_container.configure(image=self.image)
+        self.responsive_image = ResponsiveImage(self, self.image)
+        self.responsive_image.grid(row=1, columnspan=2)
 
     def save(self):
         date = datetime.now().strftime('%Y-%m-%d_%H%M%S')
@@ -71,5 +73,6 @@ class ResultsBSC(Frame):
 
     def reset(self):
         # Clear result image
-        self.image_container.configure(image=None)
+        # self.image_container.configure(image=None)
+        self.responsive_image.destroy()
         self.image = None

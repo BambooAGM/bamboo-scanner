@@ -1,6 +1,6 @@
 from tkinter import *
 from backend.bsc import *
-from gui.widgets.custom import YellowButton, GreenButton, RedButton
+from gui.widgets.custom import YellowButton, GreenButton, RedButton, ResponsiveImage
 from gui.widgets.grid_helpers import make_rows_responsive, make_columns_responsive
 
 
@@ -11,6 +11,7 @@ class PickCircumferencesBSC(Frame):
         self.controller = controller
         self.title = "Select Circumferences"
         self.selected_circumferences = []
+        self.responsive_image = None
         self.initialize_widgets()
         self.bind("<<ShowFrame>>", self.on_show_frame)
 
@@ -37,8 +38,8 @@ class PickCircumferencesBSC(Frame):
         self.circumference_title.grid(row=0, column=0, columnspan=2, pady=20)
 
         # Image
-        self.image_container = Label(self)
-        self.image_container.grid(row=1, column=0, rowspan=3, columnspan=2)
+        # self.image_container = Label(self)
+        # self.image_container.grid(row=1, column=0, rowspan=3, columnspan=2)
 
         # instructions
         instructions_text = "More than 2 circumferences were found.\n"
@@ -85,7 +86,11 @@ class PickCircumferencesBSC(Frame):
         self.current_circumference_var.set(index)
         image = self.images[index]
         # update image container
-        self.image_container.configure(image=image)
+        # self.image_container.configure(image=image)
+        if self.responsive_image is not None:
+            self.responsive_image.destroy()
+        self.responsive_image = ResponsiveImage(self, image)
+        self.responsive_image.grid(row=1, column=0, rowspan=3, columnspan=2)
 
     def update_navigation(self, *args):
         current = self.current_circumference_var.get()
@@ -174,3 +179,8 @@ class PickCircumferencesBSC(Frame):
     def reset(self):
         self.selected_count_var.set(0)
         self.selected_circumferences = []
+
+        # destroy the image container
+        if self.responsive_image is not None:
+            self.responsive_image.destroy()
+            self.responsive_image = None

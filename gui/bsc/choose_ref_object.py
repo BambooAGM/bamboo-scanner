@@ -1,6 +1,6 @@
 from tkinter import *
 from backend.bsc import *
-from gui.widgets.custom import YellowButton, GreenButton
+from gui.widgets.custom import YellowButton, GreenButton, ResponsiveImage
 from gui.widgets.grid_helpers import make_rows_responsive, make_columns_responsive
 
 
@@ -10,6 +10,7 @@ class RefObjectBSC(Frame):
         Frame.__init__(self, parent)
         self.controller = controller
         self.title = "Configure the reference object"
+        self.responsive_image = None
         self.initialize_widgets()
         self.bind("<<ShowFrame>>", self.on_show_frame)
 
@@ -34,8 +35,8 @@ class RefObjectBSC(Frame):
         self.ref_object_title.grid(row=0, column=0, columnspan=2, pady=20)
 
         # Image
-        self.image_container = Label(self)
-        self.image_container.grid(row=1, column=0, rowspan=6, columnspan=2)
+        # self.image_container = Label(self)
+        # self.image_container.grid(row=1, column=0, rowspan=6, columnspan=2)
 
         # instructions
         instructions_text = "The reference object should be a figure for which its width or height is known.\n"
@@ -92,7 +93,11 @@ class RefObjectBSC(Frame):
     def update_image(self, *args):
         image = self.box[self.dimension_type.get()][0]
         # update image container
-        self.image_container.configure(image=image)
+        # self.image_container.configure(image=image)
+        if self.responsive_image is not None:
+            self.responsive_image.destroy()
+        self.responsive_image = ResponsiveImage(self, image)
+        self.responsive_image.grid(row=1, column=0, rowspan=6, columnspan=2)
 
     def update_navigation(self, *args):
         current = self.current_contour_var.get()
@@ -149,3 +154,8 @@ class RefObjectBSC(Frame):
     def reset(self):
         # reset real dimension entry field
         self.real_dimension_var.set("")
+
+        # destroy the image container
+        if self.responsive_image is not None:
+            self.responsive_image.destroy()
+            self.responsive_image = None

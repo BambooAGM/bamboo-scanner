@@ -162,9 +162,13 @@ def render_box(index):
     box_height = dist.euclidean((tl_tr_x, tl_tr_y), (bl_br_x, bl_br_y))
     box_width = dist.euclidean((tl_bl_x, tl_bl_y), (tr_br_x, tr_br_y))
 
+    # result = {
+    #     "horizontal": (convert_cv_to_tk(orig_horizontal_line), box_width),
+    #     "vertical": (convert_cv_to_tk(orig_vertical_line), box_height)
+    # }
     result = {
-        "horizontal": (convert_cv_to_tk(orig_horizontal_line), box_width),
-        "vertical": (convert_cv_to_tk(orig_vertical_line), box_height)
+        "horizontal": (convert_cv_to_pil(orig_horizontal_line), box_width),
+        "vertical": (convert_cv_to_pil(orig_vertical_line), box_height)
     }
 
     return result
@@ -185,7 +189,9 @@ def render_all_circumferences():
         cv2.drawContours(circ_image, [cnt], 0, color=(0, 255, 0), thickness=2)
 
         # convert to TkImage and add to result
-        circumference_images.append(convert_cv_to_tk(circ_image))
+        # circumference_images.append(convert_cv_to_tk(circ_image))
+        circumference_images.append(convert_cv_to_pil(circ_image))
+
 
     return circumference_images
 
@@ -221,7 +227,8 @@ def render_final_circumferences():
             cv2.drawContours(output, [cnt], 0, color=color, thickness=1)
             cv2.circle(output, center=(cx, cy), radius=3, color=color, thickness=-1)
 
-        __output_image = convert_cv_to_tk(output)
+        # __output_image = convert_cv_to_tk(output)
+        __output_image = convert_cv_to_pil(output)
 
     return __output_image
 
@@ -318,7 +325,7 @@ def do_pre_processing(image):
     # perform edge detection, then perform a dilation + erosion to close gaps in between object edges
     # orig = 50, 100
     # test8: 50, 175 .. 100, 200
-    edged = cv2.Canny(gray, threshold1=100, threshold2=150)
+    edged = cv2.Canny(gray, threshold1=50, threshold2=150)
     edged = cv2.dilate(edged, kernel=None, iterations=1)
     edged = cv2.erode(edged, kernel=None, iterations=1)
 
@@ -334,6 +341,14 @@ def convert_cv_to_tk(image):
 
     # then to ImageTk format
     return ImageTk.PhotoImage(image)
+
+
+def convert_cv_to_pil(image):
+    # swap color channels: BGR -> RGB
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    # convert the image to PIL format
+    return Image.fromarray(image)
 
 
 def midpoint(ptA, ptB):
