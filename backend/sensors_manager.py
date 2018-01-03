@@ -45,7 +45,7 @@ def getInstantRawSensorData():
         readLine = arduinoSerial.readline()
         lineFromPort = str(readLine)[2:len(readLine)]
       
-        splittedArray= lineFromPort.split(";")
+        splittedArray = lineFromPort.split(";")
         for i in range(0, len(splittedArray)):
                 
             resultArray.append(splittedArray[i])
