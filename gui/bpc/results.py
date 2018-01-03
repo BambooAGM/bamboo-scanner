@@ -1,6 +1,8 @@
 from datetime import datetime
 from tkinter import filedialog, messagebox
 from tkinter import *
+
+from backend.bpc import generate_textfile
 from gui.widgets.grid_helpers import make_columns_responsive, make_rows_responsive
 from gui.widgets.custom import TableLeftHeaders, GreenButton, YellowButton, RedButton
 
@@ -84,21 +86,15 @@ class ResultsBPC(Frame):
 
         # make sure the user didn't cancel the dialog
         if len(save_path) > 0:
-            # reset BPC
-            self.controller.reset_BPC()
-            # Go to BPC configuration page
-            self.controller.show_frame("ConfigBPC")
-
-            # uncomment when integrated
-            # if generate_text_file(save_path):
-            #     # all good
-            #     messagebox.showinfo("Success!", "File was generated successfully.")
-            #     # reset BPC
-            #     self.controller.reset_BPC()
-            #     # Go to BPC configuration page
-            #     self.controller.show_frame("ConfigBPC")
-            # else:
-            #     messagebox.showerror("Error generating text file", "Make sure you have access to the selected destination.")
+            if generate_textfile(save_path):
+                # all good
+                messagebox.showinfo("Success!", "File was generated successfully.")
+                # reset BPC
+                self.controller.reset_BPC()
+                # Go to BPC configuration page
+                self.controller.show_frame("ConfigBPC")
+            else:
+                messagebox.showerror("Error generating text file", "Make sure you have access to the selected destination.")
 
     def discard(self):
         result = messagebox.askokcancel("Discard captured measurements?", "You will lose all the measurements you have captured so far.",

@@ -1,4 +1,5 @@
 from tkinter import *
+from backend.bpc import set_sampleDescription
 from gui.widgets.grid_helpers import make_columns_responsive, make_rows_responsive
 from gui.widgets.custom import ScrollableTextArea, YellowButton
 
@@ -30,7 +31,7 @@ class ConfigBPC(Frame):
     def begin(self):
         text = self.text_area.text.get(1.0, END)
         print(text)
-        #bpc.set_description(text)
+        set_sampleDescription(text)
         self.controller.show_frame("MeasureBPC")
 
     def reset(self):

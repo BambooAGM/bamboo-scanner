@@ -1,7 +1,25 @@
+import queue
+import threading
 from tkinter import *
 from gui.widgets.grid_helpers import make_rows_responsive, make_columns_responsive
 from gui.widgets.custom import TableLeftHeaders, YellowButton, GreenButton
-from backend.sensors_manager import *
+from backend.sensors_manager import getInstantRawSensorData, closeArduinoSerial
+
+
+def get_live_sensors(widget):
+    while widget.do_sensors_update:
+        # show loading
+
+        # Fetch sensor data from arduino
+        data = getInstantRawSensorData()
+
+        # hide loading
+
+        # Place data in queue so widget can access it in a non-blocking way
+        widget.add_to_queue(data)
+
+    closeArduinoSerial()
+    print("thread finished")
 
 
 class MeasureBPC(Frame):
@@ -10,6 +28,7 @@ class MeasureBPC(Frame):
         Frame.__init__(self, parent)
         self.controller = controller
         self.title = "Live Sensor Readings (cm)"
+        self.queue = queue.LifoQueue()
         self.initialize_widgets()
         self.bind("<<ShowFrame>>", self.on_show_frame)
         self.bind("<<LeaveFrame>>", self.on_leave_frame)
@@ -48,30 +67,39 @@ class MeasureBPC(Frame):
         make_rows_responsive(self)
         make_columns_responsive(self)
 
+    def add_to_queue(self, data):
+        self.queue.put(data)
+
+    def update_sensors(self):
+        try:
+            while True:
+                data = self.queue.get_nowait()
+                print(data)
+
+                # Update GUI with new sensor data
+                self.table.update_cells(data[0: len(data) - 1])
+                self.z_value.set("Z = " + data[len(data) - 1] + " cm")
+
+                self.update_idletasks()
+        except queue.Empty:
+            pass
+
+        self.after(100, self.update_sensors)
+
     def on_show_frame(self, event=None):
         #TODO update count label
         # bpc.get_number_captured()
         self.update_results_button()
+        
+        # Start live feed
         self.do_sensors_update = True
+        self.live_thread = threading.Thread(target=lambda: get_live_sensors(self), name="live_sensors")
+        self.live_thread.start()
         self.update_sensors()
 
     def on_leave_frame(self, event=None):
         # stop live feed and close serial port
         self.do_sensors_update = False
-        closeArduinoSerial()
-
-    def update_sensors(self):
-        sensors_data = getInstantRawSensorData()
-        print(sensors_data)
-
-        # sensors_data = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "22"]
-        self.table.update_cells(sensors_data[0:12])
-        self.z_value.set("Z = " + sensors_data[12] + " cm")
-        # print("updated sensors")
-        if self.do_sensors_update:
-            self.after(100, self.update_sensors)
-        else:
-            closeArduinoSerial()
 
     def capture(self):
         #bpc.save_measurements()

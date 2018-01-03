@@ -2,6 +2,7 @@ from tkinter import font, messagebox
 from tkinter import *
 from PIL import ImageTk, Image
 from backend.bsc import reset_bsc_backend
+from backend.sensors_manager import isPortOpen, closeArduinoSerial
 from gui.home import Home
 from gui.bsc.choose_image import ConfigBSC
 from gui.bsc.choose_ref_object import RefObjectBSC
@@ -169,10 +170,19 @@ class BambooScanner(Tk):
 
 if __name__ == "__main__":
     def exit_handler():
-        # TODO only run with unsaved progress ?
         if messagebox.askokcancel("Quit", "Do you really wish to quit?", default="cancel", icon="warning"):
+            # Close port before quitting
+            if isPortOpen:
+                closeArduinoSerial()
+            # Exit
             app.destroy()
 
+    # close port if for some reason it is open
+    if isPortOpen:
+        print("port was open on startup")
+        closeArduinoSerial()
+
+    # start GUI
     app = BambooScanner()
     app.protocol("WM_DELETE_WINDOW", exit_handler)
     app.mainloop()
