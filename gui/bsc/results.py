@@ -12,6 +12,7 @@ class ResultsBSC(Frame):
         Frame.__init__(self, parent)
         self.controller = controller
         self.title = "Slice Results"
+        self.responsive_image = None
         self.initialize_widgets()
         self.bind("<<ShowFrame>>", self.on_show_frame)
 
@@ -72,7 +73,8 @@ class ResultsBSC(Frame):
             self.controller.show_frame("ConfigBSC")
 
     def reset(self):
-        # Clear result image
-        # self.image_container.configure(image=None)
-        self.responsive_image.destroy()
-        self.image = None
+        # destroy the image container
+        if self.responsive_image is not None:
+            self.responsive_image.destroy()
+            self.responsive_image = None
+            self.image = None

@@ -22,9 +22,8 @@ def process_image(image_path, new_h):
     Finds contours that may be possible reference objects.
 
     :param image_path: path to source image in filesystem.
-    :param new_w: width to resize image
     :param new_h: height to resize image
-    :return: Number of contour boxes, and sends the GUI the 1st box.
+    :return: Status message
     """
     global __image_path, __original_image, __contour_boxes, __circumferences
 
@@ -39,7 +38,7 @@ def process_image(image_path, new_h):
     # TODO needs rezise? width or height?
 
     # resize
-    __original_image = resize(__original_image, height=new_h)
+    # __original_image = resize(__original_image, height=new_h)
 
     # Reduce background noise and apply canny edge detection
     temp_image = do_pre_processing(__original_image)
@@ -51,13 +50,12 @@ def process_image(image_path, new_h):
     # sort contours from left to right
     (cnts, _) = contours.sort_contours(cnts)
 
-    last_valid_area = None
-
+    counter = 1
     for c in cnts:
         area = cv2.contourArea(c)
 
         # ignore small contours
-        if area < 500:
+        if area < 10000:
             continue
 
         # compute the rotated bounding box of the contour
@@ -74,104 +72,149 @@ def process_image(image_path, new_h):
         # save these boxes so we can browse them in the GUI
         __contour_boxes.append(box)
 
-        # Look for circular objects
         perimeter = cv2.arcLength(c, closed=True)
         approx = cv2.approxPolyDP(c, epsilon=0.01 * perimeter, closed=True)
 
+        # Look for circular objects
         if len(approx) > 10 and len(approx) < 20:
-            # get centroid
-            M = cv2.moments(c)
-            (cx, cy) = int(M['m10'] / M['m00']), int(M['m01'] / M['m00'])
+            # filter with contour properties
 
-            # Save circumferences and centroids to render later
-            circumference = (c, (cx, cy))
-            __circumferences.append(circumference)
+            # BOUNDING RECTANGLE
+            x, y, w, h = cv2.boundingRect(c)
+
+            # aspect ratio
+            aspect_ratio = float(w) / h
+
+            # extent
+            rect_area = w * h
+            extent = float(area) / rect_area
+
+            # solidity
+            hull = cv2.convexHull(c)
+            hull_area = cv2.contourArea(hull)
+            solidity = float(area) / hull_area
+
+            # valid properties
+            size_ok = w > 25 and h > 25
+            solidity_ok = solidity > 0.9
+            aspect_ratio_ok = aspect_ratio >= 0.8 and aspect_ratio <= 1.2
+
+            if size_ok and solidity_ok and aspect_ratio_ok:
+                print("Object", counter)
+                counter += 1
+                print("aspect ratio", aspect_ratio)
+                print("extent", extent)
+                print("solidity", solidity)
+
+                # get centroid
+                M = cv2.moments(c)
+                (cx, cy) = int(M['m10'] / M['m00']), int(M['m01'] / M['m00'])
+
+                # get real points
+                # mask = np.zeros(temp_image.shape, np.uint8)
+                # cv2.drawContours(mask, [c], 0, 255, -1)
+                # # pixelpoints = np.transpose(np.nonzero(mask))
+                # pixelpoints = cv2.findNonZero(mask)
+                # print("pixelpoints", len(pixelpoints))
+                # print("contour", len(c))
+
+                # Save circumference, centroid, and hull
+                circumference = (c, (cx, cy))
+                __circumferences.append(circumference)
+
+                test_image = __original_image.copy()
+                cv2.drawContours(test_image, [c], 0, (200, 0, 0), 2)
+                # cv2.drawContours(test_image, [hull], 0, (0, 200, 0), 2)
+                cv2.imshow("indi", test_image)
+                cv2.waitKey(0)
+
 
     print("# of circumferences:", len(__circumferences))
 
     if len(__circumferences) >= 2:
         return "OK"
     else:
+        # reset
+        reset_bsc_backend()
         return "Less than 2 circumferences where found in the image."
 
 
-def get_number_contours():
-    global __contour_boxes
-    return len(__contour_boxes)
-
-
-def render_box(index):
+def render_boxes():
     """
     Generates 2 images of the specified bounding box (with horizontal and vertical bisections)
 
-    :param index: The bounding box to render
     :return: result = { "horizontal": (TkImage, width), "vertical": (TkImage, height) }
     """
     global __original_image, __contour_boxes
 
-    box = __contour_boxes[index]
+    # box = __contour_boxes[index]
+    boxes = []
 
-    # 1st of 2 output images: horizontal and vertical bisections
-    orig_horizontal_line = __original_image.copy()
+    for box in __contour_boxes:
 
-    # draw the actual boxes
-    cv2.drawContours(orig_horizontal_line, [box.astype("int")], -1, (0, 255, 0), 2)
+        # 1st of 2 output images: horizontal and vertical bisections
+        orig_horizontal_line = __original_image.copy()
 
-    # loop over the original points and draw them
-    for (x, y) in box:
-        cv2.circle(orig_horizontal_line, (int(x), int(y)), 5, (0, 0, 255), -1)
+        # draw the actual boxes
+        cv2.drawContours(orig_horizontal_line, [box.astype("int")], -1, (0, 255, 0), 2)
 
-    # unpack the ordered bounding box, then compute the midpoint
-    # between the top-left and top-right coordinates, followed by
-    # the midpoint between bottom-left and bottom-right coordinates
-    (tl, tr, br, bl) = box
+        # loop over the original points and draw them
+        for (x, y) in box:
+            cv2.circle(orig_horizontal_line, (int(x), int(y)), 5, (0, 0, 255), -1)
 
-    # Midpoints
-    # Forms vertical bisection
-    (tl_tr_x, tl_tr_y) = midpoint(tl, tr)  # top-left and top-right
-    (bl_br_x, bl_br_y) = midpoint(bl, br)  # bottom-left and bottom-right
+        # unpack the ordered bounding box, then compute the midpoint
+        # between the top-left and top-right coordinates, followed by
+        # the midpoint between bottom-left and bottom-right coordinates
+        (tl, tr, br, bl) = box
 
-    # Forms horizontal bisection
-    (tl_bl_x, tl_bl_y) = midpoint(tl, bl)  # top-left and bottom-left
-    (tr_br_x, tr_br_y) = midpoint(tr, br)  # top-right and bottom-right
+        # Midpoints
+        # Forms vertical bisection
+        (tl_tr_x, tl_tr_y) = midpoint(tl, tr)  # top-left and top-right
+        (bl_br_x, bl_br_y) = midpoint(bl, br)  # bottom-left and bottom-right
 
-    # 2nd output image; Here is where the images deviate
-    orig_vertical_line = orig_horizontal_line.copy()
+        # Forms horizontal bisection
+        (tl_bl_x, tl_bl_y) = midpoint(tl, bl)  # top-left and bottom-left
+        (tr_br_x, tr_br_y) = midpoint(tr, br)  # top-right and bottom-right
 
-    # draw the midpoints on the image
-    cv2.circle(orig_vertical_line, (int(tl_tr_x), int(tl_tr_y)), 5, (255, 0, 0), -1)
-    cv2.circle(orig_vertical_line, (int(bl_br_x), int(bl_br_y)), 5, (255, 0, 0), -1)
-    cv2.circle(orig_horizontal_line, (int(tl_bl_x), int(tl_bl_y)), 5, (255, 0, 0), -1)
-    cv2.circle(orig_horizontal_line, (int(tr_br_x), int(tr_br_y)), 5, (255, 0, 0), -1)
+        # 2nd output image; Here is where the images deviate
+        orig_vertical_line = orig_horizontal_line.copy()
 
-    # draw lines between the midpoints
-    cv2.line(orig_vertical_line, (int(tl_tr_x), int(tl_tr_y)), (int(bl_br_x), int(bl_br_y)), (255, 0, 255), 2)
-    cv2.line(orig_horizontal_line, (int(tl_bl_x), int(tl_bl_y)), (int(tr_br_x), int(tr_br_y)), (255, 0, 255), 2)
+        # draw the midpoints on the image
+        cv2.circle(orig_vertical_line, (int(tl_tr_x), int(tl_tr_y)), 5, (255, 0, 0), -1)
+        cv2.circle(orig_vertical_line, (int(bl_br_x), int(bl_br_y)), 5, (255, 0, 0), -1)
+        cv2.circle(orig_horizontal_line, (int(tl_bl_x), int(tl_bl_y)), 5, (255, 0, 0), -1)
+        cv2.circle(orig_horizontal_line, (int(tr_br_x), int(tr_br_y)), 5, (255, 0, 0), -1)
 
-    # draw text on midpoint of lines
-    # vertical
-    (m_vertical_x, m_vertical_y) = midpoint((tl_tr_x, tl_tr_y), (bl_br_x, bl_br_y))
-    cv2.putText(orig_vertical_line, "X", (int(m_vertical_x - 5), int(m_vertical_y)),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 255), 2)
-    # horizontal
-    (m_horizontal_x, m_horizontal_y) = midpoint((tl_bl_x, tl_bl_y), (tr_br_x, tr_br_y))
-    cv2.putText(orig_horizontal_line, "X", (int(m_horizontal_x), int(m_horizontal_y + 5)),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 255), 2)
+        # draw lines between the midpoints
+        cv2.line(orig_vertical_line, (int(tl_tr_x), int(tl_tr_y)), (int(bl_br_x), int(bl_br_y)), (255, 0, 255), 2)
+        cv2.line(orig_horizontal_line, (int(tl_bl_x), int(tl_bl_y)), (int(tr_br_x), int(tr_br_y)), (255, 0, 255), 2)
 
-    # compute the Euclidean distance between the midpoints
-    box_height = dist.euclidean((tl_tr_x, tl_tr_y), (bl_br_x, bl_br_y))
-    box_width = dist.euclidean((tl_bl_x, tl_bl_y), (tr_br_x, tr_br_y))
+        # draw text on midpoint of lines
+        # vertical
+        (m_vertical_x, m_vertical_y) = midpoint((tl_tr_x, tl_tr_y), (bl_br_x, bl_br_y))
+        cv2.putText(orig_vertical_line, "X", (int(m_vertical_x - 5), int(m_vertical_y)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 255), 2)
+        # horizontal
+        (m_horizontal_x, m_horizontal_y) = midpoint((tl_bl_x, tl_bl_y), (tr_br_x, tr_br_y))
+        cv2.putText(orig_horizontal_line, "X", (int(m_horizontal_x), int(m_horizontal_y + 5)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 255), 2)
 
-    # result = {
-    #     "horizontal": (convert_cv_to_tk(orig_horizontal_line), box_width),
-    #     "vertical": (convert_cv_to_tk(orig_vertical_line), box_height)
-    # }
-    result = {
-        "horizontal": (convert_cv_to_pil(orig_horizontal_line), box_width),
-        "vertical": (convert_cv_to_pil(orig_vertical_line), box_height)
-    }
+        # compute the Euclidean distance between the midpoints
+        box_height = dist.euclidean((tl_tr_x, tl_tr_y), (bl_br_x, bl_br_y))
+        box_width = dist.euclidean((tl_bl_x, tl_bl_y), (tr_br_x, tr_br_y))
 
-    return result
+        # result = {
+        #     "horizontal": (convert_cv_to_tk(orig_horizontal_line), box_width),
+        #     "vertical": (convert_cv_to_tk(orig_vertical_line), box_height)
+        # }
+        contour_box = {
+            "horizontal": (convert_cv_to_pil(orig_horizontal_line), box_width),
+            "vertical": (convert_cv_to_pil(orig_vertical_line), box_height)
+        }
+
+        boxes.append(contour_box)
+
+    return boxes
 
 
 def set_pixels_per_metric(value):
@@ -192,7 +235,6 @@ def render_all_circumferences():
         # circumference_images.append(convert_cv_to_tk(circ_image))
         circumference_images.append(convert_cv_to_pil(circ_image))
 
-
     return circumference_images
 
 
@@ -212,23 +254,48 @@ def set_final_circumferences(selected):
     __circumferences = final_circumferences
 
 
+def sort_circumferences():
+    # get a reference of each circumference tuple (contour, centroid, hull)
+    circumference_1 = __circumferences[0]
+    circumference_2 = __circumferences[1]
+
+    # find out which is bigger
+    area_1 = len(circumference_1[0])
+    area_2 = len(circumference_2[0])
+
+    # outer circumference should come first
+    if area_2 > area_1:
+        __circumferences.reverse()
+
+
+def apply_hull_to_outer():
+    outer = __circumferences[0]
+
+    hull = outer[2]
+    original_contour = outer[0]
+
+    print("hull", len(hull))
+    print("original", len(original_contour))
+
+
 def render_final_circumferences():
     global __output_image
 
-    # Generate if we haven't yet
-    if __output_image is None:
-        output = __original_image.copy()
-        colors = ((0, 0, 255), (255, 255, 0))
+    output = __original_image.copy()
+    colors = ((0, 0, 255), (255, 255, 0))
 
-        for (circumference, color) in zip(__circumferences, colors):
-            cnt = circumference[0]
-            cx, cy = circumference[1]
+    sort_circumferences()
+    # apply_hull_to_outer()
 
-            cv2.drawContours(output, [cnt], 0, color=color, thickness=1)
-            cv2.circle(output, center=(cx, cy), radius=3, color=color, thickness=-1)
+    for (circumference, color) in zip(__circumferences, colors):
+        cnt = circumference[0]
+        cx, cy = circumference[1]
 
-        # __output_image = convert_cv_to_tk(output)
-        __output_image = convert_cv_to_pil(output)
+        cv2.drawContours(output, [cnt], 0, color=color, thickness=2)
+        cv2.circle(output, center=(cx, cy), radius=3, color=color, thickness=-1)
+
+    # __output_image = convert_cv_to_tk(output)
+    __output_image = convert_cv_to_pil(output)
 
     return __output_image
 
@@ -307,25 +374,18 @@ def generate_text_file(file_path):
 
 
 def do_pre_processing(image):
-    # luminescence = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
-    # channels = cv2.split(luminescence)
-    # channels[0] = cv2.equalizeHist(channels[0])
-    # luminescence = cv2.merge(channels)
-    # luminescence = cv2.cvtColor(luminescence, cv2.COLOR_YUV2BGR)
-
-    # START PRE-PROCESSING
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # OPTION 1
-    # gray = cv2.GaussianBlur(gray, ksize=(7, 7), sigmaX=0)
+    gray = cv2.GaussianBlur(gray, ksize=(5, 5), sigmaX=0)
 
     # OPTION 2
     # smooth out any background noise and preserve edges
-    gray = cv2.bilateralFilter(gray, d=5, sigmaColor=75, sigmaSpace=50)
+    # gray = cv2.bilateralFilter(gray, d=5, sigmaColor=75, sigmaSpace=50)
 
     # perform edge detection, then perform a dilation + erosion to close gaps in between object edges
     # orig = 50, 100
-    # test8: 50, 175 .. 100, 200
-    edged = cv2.Canny(gray, threshold1=50, threshold2=150)
+    # test8: 50, 175 .. 100, 200... 22, 66
+    edged = cv2.Canny(gray, threshold1=0, threshold2=60)
     edged = cv2.dilate(edged, kernel=None, iterations=1)
     edged = cv2.erode(edged, kernel=None, iterations=1)
 
@@ -351,8 +411,8 @@ def convert_cv_to_pil(image):
     return Image.fromarray(image)
 
 
-def midpoint(ptA, ptB):
-    return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
+def midpoint(pt_a, pt_b):
+    return (pt_a[0] + pt_b[0]) * 0.5, (pt_a[1] + pt_b[1]) * 0.5
 
 
 def reset_bsc_backend():

@@ -42,7 +42,7 @@ class RefObjectBSC(Frame):
         instructions_text = "The reference object should be a figure for which its width or height is known.\n"
         instructions_text += "This will allow the program to calculate the real dimensions of the bamboo slice."
         self.instructions = Label(self, text=instructions_text, relief=GROOVE)
-        self.instructions.grid(row=1, column=2, columnspan=2)
+        self.instructions.grid(row=1, column=2, columnspan=2, padx=15)
 
         # select dimension to enter for the reference object
         self.dimension_label = Label(self, text="Dimension I'm providing:", font=self.controller.header_font)
@@ -81,12 +81,12 @@ class RefObjectBSC(Frame):
 
     def on_show_frame(self, event=None):
         # fetch 1st contour
-        self.boxes_len = get_number_contours()
+        self.boxes = render_boxes()
         self.show_contour(0)
         self.update_confirm_button()
 
     def show_contour(self, index):
-        self.box = render_box(index)
+        self.box = self.boxes[index]
         self.current_contour_var.set(index)
         self.update_image()
 
@@ -111,7 +111,7 @@ class RefObjectBSC(Frame):
             self.prev_button.configure(state=NORMAL)
 
         # toggle next
-        if current == self.boxes_len - 1:
+        if current == len(self.boxes) - 1:
             self.next_button.configure(state=DISABLED)
         else:
             self.next_button.configure(state=NORMAL)
