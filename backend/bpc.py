@@ -69,7 +69,7 @@ test3 = [[6.44, 6.60, 5.97, 12],
          [5.71, 6.56, 6.57, 12],
          [5.68, 6.64, 6.67, 12]]
 '''
-saved_measurent = []
+saved_measurement = []
 finalArray2 = []
 number_of_samples = 9
 sensor_qty = 4
@@ -150,7 +150,11 @@ def capture_measurement():
     else:
         return damaged_sensors
 '''
-#def save_measurements():
+
+def save_measurements(array):
+    global saved_measurement
+    tosave = array
+    saved_measurement.append(tosave)
 
 
 
