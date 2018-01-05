@@ -59,8 +59,8 @@ class ResultsBSC(Frame):
                 messagebox.showinfo("Success!", "File was generated successfully.")
                 # reset BSC
                 self.controller.reset_BSC()
-                # go to BSC Configuration page
-                self.controller.show_frame("ConfigBSC")
+                # go to home screen
+                self.controller.show_frame("Home")
             else:
                 messagebox.showerror("Error generating text file", "Make sure you have access to the selected destination.")
 
@@ -69,8 +69,8 @@ class ResultsBSC(Frame):
         if result:
             # reset BSC
             self.controller.reset_BSC()
-            # go to BSC Configuration page
-            self.controller.show_frame("ConfigBSC")
+            # go to home screen
+            self.controller.show_frame("Home")
 
     def reset(self):
         # destroy the image container

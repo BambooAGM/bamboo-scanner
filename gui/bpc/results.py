@@ -91,8 +91,8 @@ class ResultsBPC(Frame):
                 messagebox.showinfo("Success!", "File was generated successfully.")
                 # reset BPC
                 self.controller.reset_BPC()
-                # Go to BPC configuration page
-                self.controller.show_frame("ConfigBPC")
+                # go to home screen
+                self.controller.show_frame("Home")
             else:
                 messagebox.showerror("Error generating text file", "Make sure you have access to the selected destination.")
 
@@ -102,8 +102,8 @@ class ResultsBPC(Frame):
         if result:
             # reset BPC
             self.controller.reset_BPC()
-            # Go to BPC configuration page
-            self.controller.show_frame("ConfigBPC")
+            # go to home screen
+            self.controller.show_frame("Home")
 
     def reset(self):
         # must provide this method because master Tk widget calls reset on all the frames.
