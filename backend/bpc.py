@@ -108,7 +108,7 @@ radius_of_ring = 15
 '''
 
 # Resets all global variables in case of a discard or return home
-def reset_BPC():
+def reset_bpc_backend():
     global textDesc, sensorLiveMeasurements, sortedArray, finalArray
     textDesc = ""
     sensorLiveMeasurements = []

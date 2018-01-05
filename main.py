@@ -2,8 +2,8 @@ import threading
 from tkinter import font, messagebox
 from tkinter import *
 from PIL import ImageTk, Image
+from backend.bpc import reset_bpc_backend
 from backend.bsc import reset_bsc_backend
-from backend.sensors_manager import isPortOpen, closeArduinoSerial
 from gui.home import Home
 from gui.bsc.choose_image import ConfigBSC
 from gui.bsc.choose_ref_object import RefObjectBSC
@@ -157,7 +157,7 @@ class BambooScanner(Tk):
             self.frames[name].reset()
 
         # reset backend
-        # reset_bpc_backend()
+        reset_bpc_backend()
 
     def reset_BSC(self):
         """
