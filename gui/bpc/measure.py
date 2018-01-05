@@ -1,14 +1,15 @@
 import queue
 import threading
+from serial import SerialException
 from tkinter import messagebox
 from tkinter import *
 from gui.widgets.grid_helpers import make_rows_responsive, make_columns_responsive
 from gui.widgets.custom import TableLeftHeaders, YellowButton, GreenButton
-from backend.sensors_manager import getInstantRawSensorData, openArduinoSerial, closeArduinoSerial
-from serial import SerialException
+from backend.bpc import save_measurements
+from backend.sensors_manager import getInstantRawSensorData, getCleanSensorData, openArduinoSerial, closeArduinoSerial
 
 
-def get_live_sensors(widget, read_sensors, main_quit, no_arduino, disconnected, port_lock):
+def get_live_sensors(widget, read_sensors, main_quit, no_arduino, disconnected, port_lock, capture_now):
     """
     Runs in a separate thread to retrieve live sensor data and display it without blocking the GUI.
 
@@ -18,12 +19,11 @@ def get_live_sensors(widget, read_sensors, main_quit, no_arduino, disconnected, 
     :param no_arduino: event when arduino is not found
     :param disconnected: event when not able to read from serial
     :param port_lock: semaphore to avoid race on serial port
+    :param capture_now: event when data wants to be captured
     :return: None
     """
     # Semaphore lock to guarantee only 1 thread at a time
     with port_lock:
-        print("new thread")
-
         # open serial port
         try:
             openArduinoSerial()
@@ -38,16 +38,25 @@ def get_live_sensors(widget, read_sensors, main_quit, no_arduino, disconnected, 
         # Keep reading sensors
         while read_sensors.is_set():
             try:
-                # Fetch sensor data from arduino
-                data = getInstantRawSensorData()
+                # Data wants to be captured
+                if capture_now.is_set():
+                    data = getCleanSensorData()
+                    # Save data in backend
+                    save_measurements(data)
+                    # clear once it has been saved
+                    capture_now.clear()
+
+                # Show live feed
+                else:
+                    data = getInstantRawSensorData()
+                    # Place data in queue so widget can access it in a non-blocking way
+                    widget.add_to_queue(data)
+
             except SerialException:
                 disconnected.set()
                 read_sensors.clear()
                 print("arduino disconnected")
                 return
-
-            # Place data in queue so widget can access it in a non-blocking way
-            widget.add_to_queue(data)
 
             # Check if main thread has closed
             if main_quit.is_set():
@@ -77,6 +86,8 @@ class MeasureBPC(Frame):
 
         # Signals we are reading
         self.read_sensors = threading.Event()
+        # Capture data flag
+        self.capture_now = threading.Event()
         # Error flags
         self.no_arduino = threading.Event()
         self.disconnected = threading.Event()
@@ -93,8 +104,9 @@ class MeasureBPC(Frame):
         self.count_number.set(0)
 
         # Loading message
-        self.loading_text = Label(self, text="One moment please... Initializing sensors.")
-        self.loading_text.grid(row=0, column=0, columnspan=2)
+        self.status_var = StringVar()
+        self.status_message = Label(self, textvariable=self.status_var)
+        self.status_message.grid(row=0, column=0, columnspan=2)
 
         # 12 IR sensors
         sensor_headers = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11", "S12"]
@@ -130,7 +142,7 @@ class MeasureBPC(Frame):
         # Controls update callback
         self.do_update = True
         # Flag to only update buttons and message when necessary
-        self.loading_set = False
+        self.showing_message = False
         # update GUI
         self.update_sensors()
 
@@ -140,7 +152,7 @@ class MeasureBPC(Frame):
     def run_live_thread(self):
         self.live_thread = threading.Thread(target=get_live_sensors, name="live_sensors",
                                             args=(self, self.read_sensors, self.controller.main_quit,
-                                                  self.no_arduino, self.disconnected, self.port_lock))
+                                                  self.no_arduino, self.disconnected, self.port_lock, self.capture_now))
         self.live_thread.start()
 
     def update_sensors(self):
@@ -174,8 +186,15 @@ class MeasureBPC(Frame):
                 self.controller.show_frame("ConfigBPC")
                 return
 
-        # Update from queue
-        if self.read_sensors.is_set():
+        # Capturing data
+        if self.capture_now.is_set() and not self.showing_message:
+            # Show status message
+            self.status_var.set("Capturing data...")
+            self.status_message.grid()
+            self.showing_message = True
+
+        # Update live feed
+        elif self.read_sensors.is_set():
             try:
                 while True:
                     data = self.queue.get_nowait()
@@ -185,27 +204,27 @@ class MeasureBPC(Frame):
                     self.table.update_cells(data[0: len(data) - 1])
                     self.z_value.set("Z = " + data[len(data) - 1] + " cm")
 
-                    if self.loading_set:
+                    if self.showing_message:
                         # Hide loading message
-                        self.loading_text.grid_remove()
+                        self.status_message.grid_remove()
                         # Restore buttons
                         self.capture_button.configure(state=NORMAL)
                         self.results_button.configure(state=NORMAL)
-                        self.loading_set = False
+                        self.showing_message = False
 
                     self.update_idletasks()
             except queue.Empty:
                 pass
 
         # Sensors are still initializing
-        elif not self.read_sensors.is_set() and self.do_update:
-            if not self.loading_set:
-                # Show loading message
-                self.loading_text.grid()
-                # Disable buttons
-                self.capture_button.configure(state=DISABLED)
-                self.results_button.configure(state=DISABLED)
-                self.loading_set = True
+        elif not self.read_sensors.is_set() and self.do_update and not self.showing_message:
+            # Show loading message
+            self.status_var.set("One moment please... Initializing sensors.")
+            self.status_message.grid()
+            # Disable buttons
+            self.capture_button.configure(state=DISABLED)
+            self.results_button.configure(state=DISABLED)
+            self.showing_message = True
 
         # Keep updating until exit signal is received or we leave this frame
         if not self.controller.main_quit.is_set() and self.do_update:
@@ -217,15 +236,15 @@ class MeasureBPC(Frame):
         self.do_update = False
 
     def capture(self):
-        # TODO
-        # bpc.save_measurements()
+        # Let the worker thread handle it
+        self.capture_now.set()
+
         # update captured count label
         self.count_number.set(self.count_number.get() + 1)
 
         # enable view results button after the 1st capture
         if self.count_number.get() == 1:
             self.update_results_button()
-        print("captured")
 
     def update_results_button(self):
         if self.count_number.get():

@@ -72,8 +72,6 @@ def getRawSensorData():
         lineFromPort = str(lineFromPortByteArray)[2:len(lineFromPortByteArray)] 
         resultsFromPort.append(lineFromPort)
 
-    closeArduinoSerial()
-
     return resultsFromPort
 
 
@@ -184,42 +182,43 @@ def getCleanSensorData():
 # Looks for Arduino port and opens it. 
 def openArduinoSerial():
     global arduinoSerial, isPortOpen
-    
-    print("Searching for Arduino Port...")
-    
-    arduino_ports = [ # List of ports containing the word Arduino in their description
-        p.device
-        for p in serial.tools.list_ports.comports()
-        if 'Arduino' in p.description
-    ]
-    if not arduino_ports:
-        raise IOError("No Arduino found")
-    if len(arduino_ports) > 1:
-        warnings.warn('Multiple Arduinos found - using the first')
 
-    arduinoSerial = serial.Serial(arduino_ports[0])
-    print("Arduino Port found at %s"%(arduino_ports[0]))
+    if not isPortOpen:
+        print("Searching for Arduino Port...")
 
-    time.sleep(3)
+        arduino_ports = [ # List of ports containing the word Arduino in their description
+            p.device
+            for p in serial.tools.list_ports.comports()
+            if 'Arduino' in p.description
+        ]
+        if not arduino_ports:
+            raise IOError("No Arduino found")
+        if len(arduino_ports) > 1:
+            warnings.warn('Multiple Arduinos found - using the first')
 
-    print("NOTICE: START signal send to Arduino")
-    
-    #Send START signal to Arduino. Has to be encoded from string to bytes.
-    arduinoSerial.write("START".encode()) 
-    readLine = arduinoSerial.readline()
+        arduinoSerial = serial.Serial(arduino_ports[0])
+        print("Arduino Port found at %s"%(arduino_ports[0]))
 
-    # Checks for handshake STARTREC
-    while("STARTREC" not in str(readLine)[2:len(readLine)]): 
-        print("WARNING: START not received, trying again...")
-        print(readLine)
-        time.sleep(1)
-        # Send START signal again
-        arduinoSerial.write("START".encode()) 
-        readline = arduinoSerial.readline()
+        time.sleep(3)
 
-    print("NOTICE: Arduino Handshake Received")
+        print("NOTICE: START signal send to Arduino")
 
-    isPortOpen = True
+        #Send START signal to Arduino. Has to be encoded from string to bytes.
+        arduinoSerial.write("START".encode())
+        readLine = arduinoSerial.readline()
+
+        # Checks for handshake STARTREC
+        while("STARTREC" not in str(readLine)[2:len(readLine)]):
+            print("WARNING: START not received, trying again...")
+            print(readLine)
+            time.sleep(1)
+            # Send START signal again
+            arduinoSerial.write("START".encode())
+            readline = arduinoSerial.readline()
+
+        print("NOTICE: Arduino Handshake Received")
+
+        isPortOpen = True
     
     return arduinoSerial
 
