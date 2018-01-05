@@ -1,50 +1,64 @@
 import queue
 import threading
+from tkinter import messagebox
 from tkinter import *
 from gui.widgets.grid_helpers import make_rows_responsive, make_columns_responsive
 from gui.widgets.custom import TableLeftHeaders, YellowButton, GreenButton
 from backend.sensors_manager import getInstantRawSensorData, openArduinoSerial, closeArduinoSerial
+from serial import SerialException
 
 
-def get_live_sensors(widget, read_sensors, program_closed, port_closed):
+def get_live_sensors(widget, read_sensors, main_quit, no_arduino, disconnected, port_lock):
     """
-    Background thread to read from sensors into a queue
+    Runs in a separate thread to retrieve live sensor data and display it without blocking the GUI.
 
-    :param widget: The measure_BPC Frame
+    :param widget: The widget whose queue we are populating (MeasureBPC Frame)
+    :param read_sensors: controls when it should read from the serial port
+    :param main_quit: signals the main thread has ended, and so shall the threads
+    :param no_arduino: event when arduino is not found
+    :param disconnected: event when not able to read from serial
+    :param port_lock: semaphore to avoid race on serial port
     :return: None
     """
-    # Wait for the previous thread to finish
-    print("new thread")
-    port_closed.wait()
-    print("is closed")
+    # Semaphore lock to guarantee only 1 thread at a time
+    with port_lock:
+        print("new thread")
 
-    # open serial port
-    openArduinoSerial()
-    # send signal when it opens
-    port_closed.clear()
-
-    # wait for signal to read
-    read_sensors.wait()
-
-    # read signal received
-    while read_sensors.is_set():
-        # Fetch sensor data from arduino
-        data = getInstantRawSensorData()
-
-        # Place data in queue so widget can access it in a non-blocking way
-        widget.add_to_queue(data)
-
-        # Check if main thread has closed
-        if program_closed.is_set():
-            closeArduinoSerial()
-            port_closed.set()
-            print("program closing")
+        # open serial port
+        try:
+            openArduinoSerial()
+        except IOError:
+            no_arduino.set()
+            print("no arduino found")
             return
 
-    # stop reading
-    closeArduinoSerial()
-    port_closed.set()
-    print("thread finished")
+        # Notify we are reading
+        read_sensors.set()
+
+        # Keep reading sensors
+        while read_sensors.is_set():
+            try:
+                # Fetch sensor data from arduino
+                data = getInstantRawSensorData()
+            except SerialException:
+                disconnected.set()
+                read_sensors.clear()
+                print("arduino disconnected")
+                return
+
+            # Place data in queue so widget can access it in a non-blocking way
+            widget.add_to_queue(data)
+
+            # Check if main thread has closed
+            if main_quit.is_set():
+                read_sensors.clear()
+                closeArduinoSerial()
+                print("program closing")
+                return
+
+        # read_sensors was cleared; stop reading
+        closeArduinoSerial()
+        print("thread finished")
 
 
 class MeasureBPC(Frame):
@@ -53,13 +67,19 @@ class MeasureBPC(Frame):
         Frame.__init__(self, parent)
         self.controller = controller
         self.title = "Live Sensor Readings (cm)"
-        self.queue = queue.LifoQueue()
-        self.port_closed = threading.Event()
-        self.port_closed.set()
-        self.read_sensors = threading.Event()
         self.initialize_widgets()
         self.bind("<<ShowFrame>>", self.on_show_frame)
         self.bind("<<LeaveFrame>>", self.on_leave_frame)
+
+        # Live feed threading
+        self.queue = queue.LifoQueue()
+        self.port_lock = threading.Semaphore()
+
+        # Signals we are reading
+        self.read_sensors = threading.Event()
+        # Error flags
+        self.no_arduino = threading.Event()
+        self.disconnected = threading.Event()
 
     def add_to_queue(self, data):
         self.queue.put(data)
@@ -107,24 +127,52 @@ class MeasureBPC(Frame):
         # bpc.get_number_captured()
         self.update_results_button()
 
-        # Show loading message
-        self.loading_text.grid()
-
-        # open port and start reading
-        self.live_thread = threading.Thread(target=get_live_sensors, name="live_sensors",
-                                            args=(self, self.read_sensors, self.controller.program_closed, self.port_closed))
-        self.live_thread.start()
-
-        # send read signal
-        self.read_sensors.set()
-
+        # Controls update callback
+        self.do_update = True
+        # Flag to only update buttons and message when necessary
+        self.loading_set = False
         # update GUI
         self.update_sensors()
 
+        # Open port and start reading
+        self.run_live_thread()
+
+    def run_live_thread(self):
+        self.live_thread = threading.Thread(target=get_live_sensors, name="live_sensors",
+                                            args=(self, self.read_sensors, self.controller.main_quit,
+                                                  self.no_arduino, self.disconnected, self.port_lock))
+        self.live_thread.start()
+
     def update_sensors(self):
-        # not closed == opened
-        if not self.port_closed.is_set():
-            self.loading_text.grid_remove()
+        # No Arduino found alert
+        if self.no_arduino.is_set():
+            self.no_arduino.clear()
+
+            result = messagebox.askretrycancel("Error opening serial port",
+                                               "Make sure the Arduino is properly connected, and try again.",
+                                               icon="error")
+            # Retry
+            if result:
+                # open new thread
+                self.run_live_thread()
+            else:
+                self.controller.show_frame("ConfigBPC")
+                return
+
+        # Arduino disconnected alert
+        if self.disconnected.is_set():
+            self.disconnected.clear()
+
+            result = messagebox.askretrycancel("Error reading from Arduino",
+                                               "Make sure the Arduino is properly connected, and try again.",
+                                               icon="error")
+            # Retry
+            if result:
+                # open new thread
+                self.run_live_thread()
+            else:
+                self.controller.show_frame("ConfigBPC")
+                return
 
         # Update from queue
         if self.read_sensors.is_set():
@@ -134,19 +182,39 @@ class MeasureBPC(Frame):
                     # print(data)
 
                     # Update GUI with new sensor data
-                    if self.read_sensors.is_set():
-                        self.table.update_cells(data[0: len(data) - 1])
-                        self.z_value.set("Z = " + data[len(data) - 1] + " cm")
+                    self.table.update_cells(data[0: len(data) - 1])
+                    self.z_value.set("Z = " + data[len(data) - 1] + " cm")
+
+                    if self.loading_set:
+                        # Hide loading message
+                        self.loading_text.grid_remove()
+                        # Restore buttons
+                        self.capture_button.configure(state=NORMAL)
+                        self.results_button.configure(state=NORMAL)
+                        self.loading_set = False
 
                     self.update_idletasks()
             except queue.Empty:
                 pass
 
+        # Sensors are still initializing
+        elif not self.read_sensors.is_set() and self.do_update:
+            if not self.loading_set:
+                # Show loading message
+                self.loading_text.grid()
+                # Disable buttons
+                self.capture_button.configure(state=DISABLED)
+                self.results_button.configure(state=DISABLED)
+                self.loading_set = True
+
+        # Keep updating until exit signal is received or we leave this frame
+        if not self.controller.main_quit.is_set() and self.do_update:
             self.after(100, self.update_sensors)
 
     def on_leave_frame(self, event=None):
         # stop live feed and close serial port
         self.read_sensors.clear()
+        self.do_update = False
 
     def capture(self):
         # TODO

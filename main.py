@@ -21,7 +21,7 @@ class BambooScanner(Tk):
         Tk.__init__(self)
 
         # global program closing event (for threads)
-        self.program_closed = threading.Event()
+        self.main_quit = threading.Event()
 
         # Global fonts
         self.global_font_family = font.Font(family="Segoe UI Emoji")
@@ -176,14 +176,9 @@ if __name__ == "__main__":
     def exit_handler():
         if messagebox.askokcancel("Quit", "Do you really wish to quit?", default="cancel", icon="warning"):
             # Close port before quitting
-            app.program_closed.set()
+            app.main_quit.set()
             # Exit
             app.destroy()
-
-    # close port if for some reason it is open
-    if isPortOpen:
-        print("port was open on startup")
-        closeArduinoSerial()
 
     # start GUI
     app = BambooScanner()

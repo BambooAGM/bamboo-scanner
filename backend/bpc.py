@@ -305,48 +305,48 @@ def generate_textfile(array):
     return
 
 
-#finalArray = fill_dummy()
-print(finalArray)
-delete_measurement(2, finalArray)
-print(finalArray)
-# average_diameter(0, test)
-# print("TEST TO CLEAN")
-# print(test3)
-# test_limpio = clean_test(test3)
-# print(test_limpio)
-
-# finalArray = fill_dummy()
-# average_diameter().demo(-1, finalArray)
-# finalArray = fill_dummy()
-# print("RANDOM DUMMY DATA")
+# #finalArray = fill_dummy()
 # print(finalArray)
-
-# print("DO SENSOR DIAGNOSTIC")
-# diagnose = sensors_diagnostic(finalArray)
-# print(diagnose)
-
 # delete_measurement(2, finalArray)
-# print("DELETE MEASUREMENT TEST")
 # print(finalArray)
-# for i in range(0, len(test_limpio)):
-# test = calculate_xy(i, sort_ByZeta(test_limpio))
-# avg = average_diameter(i, sort_ByZeta(test_limpio))
-# print("AVERAGE DIAMETER TEST")
-# print(avg)
-# print("TEST XY COORDINATES RESPECT TO RING ")
-# print(test)
-
-# print("TEST 1")
-# print(test)
+# # average_diameter(0, test)
+# # print("TEST TO CLEAN")
+# # print(test3)
+# # test_limpio = clean_test(test3)
+# # print(test_limpio)
+#
+# # finalArray = fill_dummy()
+# # average_diameter().demo(-1, finalArray)
+# # finalArray = fill_dummy()
+# # print("RANDOM DUMMY DATA")
+# # print(finalArray)
+#
+# # print("DO SENSOR DIAGNOSTIC")
+# # diagnose = sensors_diagnostic(finalArray)
+# # print(diagnose)
+#
+# # delete_measurement(2, finalArray)
+# # print("DELETE MEASUREMENT TEST")
+# # print(finalArray)
+# # for i in range(0, len(test_limpio)):
+# # test = calculate_xy(i, sort_ByZeta(test_limpio))
+# # avg = average_diameter(i, sort_ByZeta(test_limpio))
+# # print("AVERAGE DIAMETER TEST")
+# # print(avg)
+# # print("TEST XY COORDINATES RESPECT TO RING ")
+# # print(test)
+#
+# # print("TEST 1")
+# # print(test)
+# # print(finalArray)
+# polar = rect_to_polar(calculate_xy(0, sort_ByZeta(finalArray)), centroide_object(0, sort_ByZeta(finalArray)))
+# print("TEST 2")
+# # print(polar)
+#
+# # centroi = centroide_object(0, sort_ByZeta(finalArray))
+# # print("TEST 3")
+# # print(centroi)
 # print(finalArray)
-polar = rect_to_polar(calculate_xy(0, sort_ByZeta(finalArray)), centroide_object(0, sort_ByZeta(finalArray)))
-print("TEST 2")
-# print(polar)
-
-# centroi = centroide_object(0, sort_ByZeta(finalArray))
-# print("TEST 3")
-# print(centroi)
-print(finalArray)
-# Functions
-#final = getCleanSensorData()
-generate_textfile(finalArray)
+# # Functions
+# #final = getCleanSensorData()
+# generate_textfile(finalArray)
