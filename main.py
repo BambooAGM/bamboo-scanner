@@ -13,6 +13,7 @@ from gui.bpc.configuration import ConfigBPC
 from gui.bpc.measure import MeasureBPC
 from gui.bpc.results import ResultsBPC
 from gui.widgets.grid_helpers import make_rows_responsive, make_columns_responsive
+from utils import resize_keep_aspect
 
 
 class BambooScanner(Tk):
@@ -46,7 +47,10 @@ class BambooScanner(Tk):
         self.navbar.grid(row=0, columnspan=2, sticky=NSEW)
 
         # Home button
-        home_image = ImageTk.PhotoImage(Image.open("assets/home.png"))
+        home_image = Image.open("assets/home.png")
+        # resize home button image
+        home_image = resize_keep_aspect(home_image, w=home_image.width, h=home_image.height, max_w=100, max_h=60)
+        home_image = ImageTk.PhotoImage(home_image)
         self.home = Label(self.navbar, image=home_image)
         self.home.image = home_image
         # bind to click event
@@ -59,11 +63,19 @@ class BambooScanner(Tk):
                                 bg="#35AD35", fg="#FFFFFF", font=self.title_font)
         self.page_title.grid(row=0, column=1, sticky=W, padx=10)
 
+        # Step indicator
+        self.step = StringVar()
+        self.page_step = Label(self.navbar, textvariable=self.step,
+                               bg="#35AD35", fg="#FFFFFF")
+        self.page_step.grid(row=0, column=2, sticky=E, padx=10)
+
+        make_columns_responsive(self.navbar, ignored=[0])
+
         # Bamboo
         bamboo_image = ImageTk.PhotoImage(Image.open("assets/bamboo.png"))
         self.bamboo = Label(self.container, image=bamboo_image)
         self.bamboo.image = bamboo_image
-        self.bamboo.grid(row=1, sticky=NW)
+        self.bamboo.grid(row=1, column=0, sticky=NW)
 
         # Common images
         self.arrow_left = ImageTk.PhotoImage(Image.open("assets/arrow_left.png"))
@@ -71,12 +83,12 @@ class BambooScanner(Tk):
         self.save_icon = ImageTk.PhotoImage(Image.open("assets/save.png"))
 
         # The class names for both BSC and BPC
-        self.bsc_frames = (ConfigBSC, RefObjectBSC, PickCircumferencesBSC, ResultsBSC)
-        self.bpc_frames = (ConfigBPC, MeasureBPC, ResultsBPC)
+        self.bsc_pages = (ConfigBSC, RefObjectBSC, PickCircumferencesBSC, ResultsBSC)
+        self.bpc_pages = (ConfigBPC, MeasureBPC, ResultsBPC)
 
         # Initialize all pages and keep their references accessible
         self.frames = {}
-        for F in (() + (Home,) + self.bsc_frames + self.bpc_frames):
+        for F in (() + (Home,) + self.bsc_pages + self.bpc_pages):
             page_name = F.__name__
             frame = F(parent=self.container, controller=self)
             self.frames[page_name] = frame
@@ -99,7 +111,7 @@ class BambooScanner(Tk):
         if result:
             # Reset the tool we were using
             # came from BPC
-            if type(self.active_frame) in self.bpc_frames:
+            if type(self.active_frame) in self.bpc_pages:
                 self.reset_BPC()
             # came from BSC
             else:
@@ -122,9 +134,10 @@ class BambooScanner(Tk):
         # Switch to new active frame
         self.active_frame = self.frames[page_name]
 
-        # update page title, except for Home page
+        # update page title and step, except for Home page
         if type(self.active_frame) != Home:
             self.update_page_title(self.active_frame.title)
+            self.update_page_step()
 
         self.active_frame.update()
         self.active_frame.event_generate("<<ShowFrame>>")
@@ -141,6 +154,23 @@ class BambooScanner(Tk):
     def update_page_title(self, title):
         self.title.set(title)
 
+    def update_page_step(self):
+        # Check if active frame is from BPC
+        for i, page in enumerate(self.bpc_pages, start=1):
+            # find the active page
+            if type(self.active_frame) == page:
+                message = "Pole Characterization\n step " + str(i) + " of " + str(len(self.bpc_pages))
+                self.step.set(message)
+                return
+
+        # Active frame is from BSC
+        for i, page in enumerate(self.bsc_pages, start=1):
+            # find the active page
+            if type(self.active_frame) == page:
+                message = "Slice Characterization\n step " + str(i) + " of " + str(len(self.bsc_pages))
+                self.step.set(message)
+                return
+
     def hide_navbar(self):
         self.navbar.grid_remove()
 
@@ -152,8 +182,8 @@ class BambooScanner(Tk):
         Reset all the BPC GUI frames and its backend module
         """
         # reset GUI
-        for frame in self.bpc_frames:
-            name = frame.__name__
+        for page in self.bpc_pages:
+            name = page.__name__
             self.frames[name].reset()
 
         # reset backend
@@ -164,8 +194,8 @@ class BambooScanner(Tk):
         Reset all the BSC GUI frames and its backend module
         """
         # reset GUI
-        for frame in self.bsc_frames:
-            name = frame.__name__
+        for page in self.bsc_pages:
+            name = page.__name__
             self.frames[name].reset()
 
         # reset backend
