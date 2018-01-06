@@ -198,14 +198,15 @@ def read_ultrasonic(index, array):
 
 
 # Deletes the element 'index' at the given array
-def delete_measurement(index, array):
-    if index < 0:
-        print("Index must not be negative or out of index of slice.")
-    if (len(array)) == 0:
-        print("Array must not be empty. ")
-    # global finalArray
-    # delete = finalArray
-    del array[index]
+def delete_measurement(array):
+    global saved_measurement
+    if array <= 0:
+        return saved_measurement
+    adjust = 0
+    for i in range(0, len(array)-1):
+        del saved_measurement[array[i]-adjust]
+        adjust += 1
+    return saved_measurement
 
 
 # Calulates te X and Y coordinates of the array of radius given by the Arduino respect to ring
