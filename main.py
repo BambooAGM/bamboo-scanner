@@ -51,15 +51,15 @@ class BambooScanner(Tk):
         # resize home button image
         home_image = resize_keep_aspect(home_image, w=home_image.width, h=home_image.height, max_w=100, max_h=60)
         home_image = ImageTk.PhotoImage(home_image)
-        self.home = Label(self.navbar, image=home_image)
+        self.home = Label(self.navbar, image=home_image, cursor="hand2")
         self.home.image = home_image
         # bind to click event
         self.home.bind("<Button-1>", self.go_home)
         self.home.grid(row=0, column=0, sticky=NSEW)
 
         # Page title
-        self.title = StringVar()
-        self.page_title = Label(self.navbar, textvariable=self.title,
+        self.title_var = StringVar()
+        self.page_title = Label(self.navbar, textvariable=self.title_var,
                                 bg="#35AD35", fg="#FFFFFF", font=self.title_font)
         self.page_title.grid(row=0, column=1, sticky=W, padx=10)
 
@@ -152,7 +152,7 @@ class BambooScanner(Tk):
         return self.frames[page_name]
 
     def update_page_title(self, title):
-        self.title.set(title)
+        self.title_var.set(title)
 
     def update_page_step(self):
         # Check if active frame is from BPC
@@ -212,5 +212,8 @@ if __name__ == "__main__":
 
     # start GUI
     app = BambooScanner()
+    # window title
+    app.title("Bamboo Scanner")
+    # Program exit handler
     app.protocol("WM_DELETE_WINDOW", exit_handler)
     app.mainloop()

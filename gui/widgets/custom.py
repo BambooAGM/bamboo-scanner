@@ -7,21 +7,21 @@ class YellowButton(Button):
 
     def __init__(self, parent, **kwargs):
         Button.__init__(self, parent, **kwargs)
-        self.configure(bg="#FF9900", relief=FLAT, padx=10, pady=5, disabledforeground="#333333")
+        self.configure(bg="#FF9900", relief=GROOVE, padx=10, pady=5, disabledforeground="#333333", cursor="hand2")
 
 
 class GreenButton(Button):
 
     def __init__(self, parent, **kwargs):
         Button.__init__(self, parent, **kwargs)
-        self.configure(bg="#99CC33", relief=FLAT, padx=10, pady=5)
+        self.configure(bg="#99CC33", relief=GROOVE, padx=10, pady=5, cursor="hand2")
 
 
 class RedButton(Button):
 
     def __init__(self, parent, **kwargs):
         Button.__init__(self, parent, **kwargs)
-        self.configure(bg="#FF3300", fg="#FFFFFF", relief=FLAT, padx=10, pady=5)
+        self.configure(bg="#FF3300", fg="#FFFFFF", relief=GROOVE, padx=10, pady=5, cursor="hand2")
 
 
 class ScrollableTextArea(Frame):
@@ -62,7 +62,7 @@ class TableLeftHeaders(Frame):
         if self.can_select_columns:
             # Delete button
             self.is_button_disabled = True
-            self.delete_button = Button(self, text="Delete\n selected", state=DISABLED, relief=FLAT)
+            self.delete_button = Button(self, text="Delete\n selected", state=DISABLED, relief=GROOVE)
             # save the original background color to restore it later
             self.disabled_background = self.delete_button.cget("background")
             # optional button callback
@@ -80,7 +80,7 @@ class TableLeftHeaders(Frame):
             # The checkbox widgets
             self.checkboxes = []
             for column in range(self.columns):
-                checkbox = Checkbutton(self, variable=self.checkbox_values[column])
+                checkbox = Checkbutton(self, variable=self.checkbox_values[column], cursor="hand2")
                 # offset by one column since delete button is in 1st column
                 checkbox.grid(row=0, column=column + 1, sticky=S+E+W)
                 self.checkboxes.append(checkbox)
@@ -143,7 +143,7 @@ class TableLeftHeaders(Frame):
         # if button is disabled, no checkboxes were checked, so we automatically enable
         if self.is_button_disabled:
             self.is_button_disabled = False
-            self.delete_button.configure(state=NORMAL, bg="#FF3300", fg="#FFFFFF")
+            self.delete_button.configure(state=NORMAL, bg="#FF3300", fg="#FFFFFF", cursor="hand2")
         # look for a selected checkbox; if non found, disable button
         else:
             for column in range(self.columns):
@@ -152,7 +152,7 @@ class TableLeftHeaders(Frame):
                     return
             # all checkboxes are unselected; disable button
             self.is_button_disabled = True
-            self.delete_button.configure(state=DISABLED, bg=self.disabled_background)
+            self.delete_button.configure(state=DISABLED, bg=self.disabled_background, cursor="arrow")
 
     def get_checked_indices(self):
         """
@@ -181,13 +181,12 @@ class ResponsiveImage(Frame):
         # make frame responsive
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
+
         self.image = ImageTk.PhotoImage(self.original)
         self.display = Canvas(self, bd=0, highlightthickness=0)
         self.display.create_image(0, 0, image=self.image, anchor=NW, tags="IMG")
         self.display.grid(row=0, sticky=NSEW)
 
-        # Main frame fills master
-        # self.pack(fill=BOTH, expand=1)
         # the magic
         self.bind("<Configure>", self.resize)
 

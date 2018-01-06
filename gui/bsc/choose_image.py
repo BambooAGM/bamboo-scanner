@@ -61,17 +61,17 @@ class ConfigBSC(Frame):
             # make it responsive
             self.responsive_image.destroy()
             self.responsive_image = ResponsiveImage(self, self.image)
-            self.responsive_image.grid(row=0, column=0, rowspan=3)
+            self.responsive_image.grid(row=0, column=0, rowspan=3, sticky=NSEW, pady=20)
 
     def on_image_path_change(self, *args):
         # image is selected
         if self.image_path.get():
-            self.begin_button.grid()
+            self.begin_button.configure(state=NORMAL, cursor="hand2")
             self.path_entry.grid()
             self.choose_button.configure(text="Change image")
         # not selected
         else:
-            self.begin_button.grid_remove()
+            self.begin_button.configure(state=DISABLED, cursor="arrow")
             self.path_entry.grid_remove()
             self.choose_button.configure(text="Choose an image")
 

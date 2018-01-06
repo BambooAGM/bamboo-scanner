@@ -122,11 +122,11 @@ def process_image(image_path, new_h):
                 circumference = (c, (cx, cy))
                 __circumferences.append(circumference)
 
-                test_image = __original_image.copy()
-                cv2.drawContours(test_image, [c], 0, (200, 0, 0), 2)
-                # cv2.drawContours(test_image, [hull], 0, (0, 200, 0), 2)
-                cv2.imshow("indi", test_image)
-                cv2.waitKey(0)
+                # test_image = __original_image.copy()
+                # cv2.drawContours(test_image, [c], 0, (200, 0, 0), 2)
+                # # cv2.drawContours(test_image, [hull], 0, (0, 200, 0), 2)
+                # cv2.imshow("indi", test_image)
+                # cv2.waitKey(0)
 
 
     print("# of circumferences:", len(__circumferences))

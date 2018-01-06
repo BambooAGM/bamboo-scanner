@@ -9,13 +9,14 @@ from backend.bpc import save_measurements
 from backend.sensors_manager import getInstantRawSensorData, getCleanSensorData, openArduinoSerial, closeArduinoSerial
 
 
-def get_live_sensors(widget, read_sensors, main_quit, no_arduino, disconnected, port_lock, capture_now):
+def get_live_sensors(widget, reading_sensors, main_quit, kill_thread, no_arduino, disconnected, port_lock, capture_now):
     """
     Runs in a separate thread to retrieve live sensor data and display it without blocking the GUI.
 
     :param widget: The widget whose queue we are populating (MeasureBPC Frame)
-    :param read_sensors: controls when it should read from the serial port
+    :param reading_sensors: signals the GUI when the port has been opened
     :param main_quit: signals the main thread has ended, and so shall the threads
+    :param kill_thread: kill signal of thread, set when navigating away from MeasureBPC
     :param no_arduino: event when arduino is not found
     :param disconnected: event when not able to read from serial
     :param port_lock: semaphore to avoid race on serial port
@@ -33,10 +34,10 @@ def get_live_sensors(widget, read_sensors, main_quit, no_arduino, disconnected, 
             return
 
         # Notify we are reading
-        read_sensors.set()
+        reading_sensors.set()
 
         # Keep reading sensors
-        while read_sensors.is_set():
+        while not main_quit.is_set() and not kill_thread.is_set():
             try:
                 # Data wants to be captured
                 if capture_now.is_set():
@@ -54,18 +55,13 @@ def get_live_sensors(widget, read_sensors, main_quit, no_arduino, disconnected, 
 
             except SerialException:
                 disconnected.set()
-                read_sensors.clear()
+                reading_sensors.clear()
                 print("arduino disconnected")
                 return
 
-            # Check if main thread has closed
-            if main_quit.is_set():
-                read_sensors.clear()
-                closeArduinoSerial()
-                print("program closing")
-                return
-
-        # read_sensors was cleared; stop reading
+        # kill signal received or main has ended
+        reading_sensors.clear()
+        kill_thread.clear()
         closeArduinoSerial()
         print("thread finished")
 
@@ -85,9 +81,12 @@ class MeasureBPC(Frame):
         self.port_lock = threading.Semaphore()
 
         # Signals we are reading
-        self.read_sensors = threading.Event()
+        self.reading_sensors = threading.Event()
         # Capture data flag
         self.capture_now = threading.Event()
+        # Kill signal
+        self.kill_thread = threading.Event()
+
         # Error flags
         self.no_arduino = threading.Event()
         self.disconnected = threading.Event()
@@ -120,7 +119,7 @@ class MeasureBPC(Frame):
 
         # captured count
         self.captured_count = Label(self, textvariable=self.count_str, font=self.controller.bold_font)
-        self.captured_count.grid(row=2, column=1, sticky=S, pady=5)
+        self.captured_count.grid(row=2, column=1, sticky=S, pady=10)
 
         # capture button
         self.capture_button = YellowButton(self, text="CAPTURE", command=self.capture)
@@ -129,33 +128,32 @@ class MeasureBPC(Frame):
         # view results button
         self.results_button = GreenButton(self, text="View Results", command=self.view_results,
                                           image=self.controller.arrow_right, compound=RIGHT)
-        self.results_button.grid(row=4, column=1)
+        self.results_button.grid(row=4, column=1, sticky=SE, padx=20, pady=20)
 
         make_rows_responsive(self)
         make_columns_responsive(self)
 
     def on_show_frame(self, event=None):
-        #TODO update count label
+        # TODO update count label
         # bpc.get_number_captured()
-        self.update_results_button()
 
         # Controls update callback
         self.do_update = True
         # Flag to only update buttons and message when necessary
         self.showing_message = False
-        # update GUI
-        self.update_sensors()
 
+        # start live GUI
+        self.update_live_gui()
         # Open port and start reading
         self.run_live_thread()
 
     def run_live_thread(self):
         self.live_thread = threading.Thread(target=get_live_sensors, name="live_sensors",
-                                            args=(self, self.read_sensors, self.controller.main_quit,
+                                            args=(self, self.reading_sensors, self.controller.main_quit, self.kill_thread,
                                                   self.no_arduino, self.disconnected, self.port_lock, self.capture_now))
         self.live_thread.start()
 
-    def update_sensors(self):
+    def update_live_gui(self):
         # No Arduino found alert
         if self.no_arduino.is_set():
             self.no_arduino.clear()
@@ -191,10 +189,12 @@ class MeasureBPC(Frame):
             # Show status message
             self.status_var.set("Capturing data...")
             self.status_message.grid()
+            self.capture_button.configure(state=DISABLED, cursor="wait")
+            self.results_button.configure(state=DISABLED, cursor="wait")
             self.showing_message = True
 
         # Update live feed
-        elif self.read_sensors.is_set():
+        elif self.reading_sensors.is_set():
             try:
                 while True:
                     data = self.queue.get_nowait()
@@ -208,8 +208,13 @@ class MeasureBPC(Frame):
                         # Hide loading message
                         self.status_message.grid_remove()
                         # Restore buttons
-                        self.capture_button.configure(state=NORMAL)
-                        self.results_button.configure(state=NORMAL)
+                        self.capture_button.configure(state=NORMAL, cursor="hand2")
+                        # only enable view results if there are any
+                        if self.count_number.get():
+                            self.results_button.configure(state=NORMAL, cursor="hand2")
+                        # leave it disabled, but with a different cursor
+                        else:
+                            self.results_button.configure(state=DISABLED, cursor="arrow")
                         self.showing_message = False
 
                     self.update_idletasks()
@@ -217,40 +222,33 @@ class MeasureBPC(Frame):
                 pass
 
         # Sensors are still initializing
-        elif not self.read_sensors.is_set() and self.do_update and not self.showing_message:
+        elif not self.reading_sensors.is_set() and self.do_update and not self.showing_message:
             # Show loading message
             self.status_var.set("One moment please... Initializing sensors.")
             self.status_message.grid()
             # Disable buttons
-            self.capture_button.configure(state=DISABLED)
-            self.results_button.configure(state=DISABLED)
+            self.capture_button.configure(state=DISABLED, cursor="wait")
+            self.results_button.configure(state=DISABLED, cursor="wait")
             self.showing_message = True
 
-        # Keep updating until exit signal is received or we leave this frame
-        if not self.controller.main_quit.is_set() and self.do_update:
-            self.after(100, self.update_sensors)
+        # Keep updating until we leave this frame
+        if self.do_update:
+            self.after(100, self.update_live_gui)
 
     def on_leave_frame(self, event=None):
         # stop live feed and close serial port
-        self.read_sensors.clear()
+        self.kill_thread.set()
+        self.reading_sensors.clear()
         self.do_update = False
 
     def capture(self):
-        # Let the worker thread handle it
-        self.capture_now.set()
+        # only one at a time
+        if not self.capture_now.is_set():
+            # Let the worker thread handle it
+            self.capture_now.set()
 
-        # update captured count label
-        self.count_number.set(self.count_number.get() + 1)
-
-        # enable view results button after the 1st capture
-        if self.count_number.get() == 1:
-            self.update_results_button()
-
-    def update_results_button(self):
-        if self.count_number.get():
-            self.results_button.grid()
-        else:
-            self.results_button.grid_remove()
+            # update captured count label
+            self.count_number.set(self.count_number.get() + 1)
 
     def update_count_label(self, *args):
         self.count_str.set(str(self.count_number.get()) + " measurements captured")

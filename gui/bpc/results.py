@@ -23,16 +23,16 @@ class ResultsBPC(Frame):
         # Go back button
         self.back_button = GreenButton(self, text="I'm not done yet", command=self.go_back,
                                        image=self.controller.arrow_left, compound=LEFT)
-        self.back_button.grid(row=1, column=0, sticky=W)
+        self.back_button.grid(row=1, column=0, sticky=SW, padx=20, pady=20)
 
         # Save button
         self.save_button = YellowButton(self, text="SAVE", command=self.save, image=self.controller.save_icon,
                                         compound=LEFT)
-        self.save_button.grid(row=1, column=1, sticky=E, padx=5)
+        self.save_button.grid(row=1, column=1, sticky=SE, padx=10, pady=20)
 
         # Discard button
         self.discard_button = RedButton(self, text="DISCARD", command=self.discard)
-        self.discard_button.grid(row=1, column=2, sticky=W, padx=5)
+        self.discard_button.grid(row=1, column=2, sticky=SW, padx=10, pady=20)
 
         make_rows_responsive(self)
         make_columns_responsive(self)
