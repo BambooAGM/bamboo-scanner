@@ -104,7 +104,7 @@ class MeasureBPC(Frame):
 
         # Loading message
         self.status_var = StringVar()
-        self.status_message = Label(self, textvariable=self.status_var)
+        self.status_message = Label(self, textvariable=self.status_var, font=self.controller.header_font)
         self.status_message.grid(row=0, column=0, columnspan=2)
 
         # 12 IR sensors
@@ -188,13 +188,16 @@ class MeasureBPC(Frame):
         if self.capture_now.is_set() and not self.showing_message:
             # Show status message
             self.status_var.set("Capturing data...")
-            self.status_message.grid()
+
+            # Disable buttons
             self.capture_button.configure(state=DISABLED, cursor="wait")
             self.results_button.configure(state=DISABLED, cursor="wait")
+
+            # message has been set
             self.showing_message = True
 
         # Update live feed
-        elif self.reading_sensors.is_set():
+        elif self.reading_sensors.is_set() and not self.capture_now.is_set():
             try:
                 while True:
                     data = self.queue.get_nowait()
@@ -204,17 +207,22 @@ class MeasureBPC(Frame):
                     self.table.update_cells(data[0: len(data) - 1])
                     self.z_value.set("Z = " + data[len(data) - 1] + " cm")
 
+                    # only do it once
                     if self.showing_message:
                         # Hide loading message
-                        self.status_message.grid_remove()
+                        self.status_var.set("Ready!")
+
                         # Restore buttons
                         self.capture_button.configure(state=NORMAL, cursor="hand2")
+
                         # only enable view results if there are any
                         if self.count_number.get():
                             self.results_button.configure(state=NORMAL, cursor="hand2")
                         # leave it disabled, but with a different cursor
                         else:
                             self.results_button.configure(state=DISABLED, cursor="arrow")
+
+                        # message has been removed
                         self.showing_message = False
 
                     self.update_idletasks()
@@ -225,10 +233,12 @@ class MeasureBPC(Frame):
         elif not self.reading_sensors.is_set() and self.do_update and not self.showing_message:
             # Show loading message
             self.status_var.set("One moment please... Initializing sensors.")
-            self.status_message.grid()
+
             # Disable buttons
             self.capture_button.configure(state=DISABLED, cursor="wait")
             self.results_button.configure(state=DISABLED, cursor="wait")
+
+            # message has been set
             self.showing_message = True
 
         # Keep updating until we leave this frame

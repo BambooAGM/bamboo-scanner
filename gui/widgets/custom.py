@@ -124,7 +124,7 @@ class TableLeftHeaders(Frame):
             try:
                 for row in range(self.rows):
                     self.cell_values[row][0].set(new_values[row])
-            except:
+            except IndexError:
                 print("Make sure the array contains a value for each row.")
         # has many columns; use multidimensional array
         else:
@@ -132,7 +132,7 @@ class TableLeftHeaders(Frame):
                 for row in range(self.rows):
                     for column in range(self.columns):
                         self.cell_values[row][column].set(new_values[column][row])
-            except:
+            except IndexError:
                 print("Your data does not match the dimensions of the table.")
 
     def set_headers(self, values):

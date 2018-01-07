@@ -39,18 +39,14 @@ def clearCache():
 # after this function.
 def getInstantRawSensorData():
     global arduinoSerial, isPortOpen
-    resultArray = []
-    
+
     if isPortOpen:
         readLine = arduinoSerial.readline()
         lineFromPort = str(readLine)[2:len(readLine)]
-      
+
         splittedArray = lineFromPort.split(";")
-        for i in range(0, len(splittedArray)):
-                
-            resultArray.append(splittedArray[i])
         
-        return resultArray
+        return splittedArray
     
     else:
         openArduinoSerial()
