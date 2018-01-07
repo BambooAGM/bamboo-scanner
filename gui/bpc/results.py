@@ -20,6 +20,10 @@ class ResultsBPC(Frame):
         self.bind("<<LeaveFrame>>", self.on_leave_frame)
 
     def initialize_widgets(self):
+        # Empty message
+        self.empty_message = Label(self, text="Nothing to see here. Go capture some measurements!",
+                                   font=self.controller.header_font)
+
         # Go back button
         self.back_button = GreenButton(self, text="I'm not done yet", command=self.go_back,
                                        image=self.controller.arrow_left, compound=LEFT)
@@ -38,34 +42,47 @@ class ResultsBPC(Frame):
         make_columns_responsive(self)
 
     def on_show_frame(self, event=None):
+        # Enable save button
+        self.save_button.configure(state=NORMAL, cursor="hand2")
+
+        print("original", saved_measurement)
+
+        # sort captured measurements by Z value
+        sort_ByZeta(saved_measurement)
+
+        print("sorted", saved_measurement)
+
         # Generate captured measurements table
         self.create_table()
 
     def create_table(self):
-        print("original", saved_measurement)
+        # Create table if there are any captured measurements
+        if saved_measurement:
+            # Make a copy of the captured measurements
+            self.captured_data = copy.deepcopy(saved_measurement)
 
-        # sort captured measurements by Z value
-        sorted = sort_ByZeta(saved_measurement)
+            # Place Z as first element
+            for column in self.captured_data:
+                column.insert(0, column.pop())
 
-        # Make a copy of the captured measurements
-        self.captured_data = copy.deepcopy(sorted)
+            self.table = TableLeftHeaders(self, rows=len(self.captured_data[0]), columns=len(self.captured_data),
+                                          header_values=self.sensor_headers, can_select_columns=True, button_command=self.delete_z)
+            # Set background of top row
+            for column in range(len(self.captured_data)):
+                self.table.cells[0][column].configure(bg="#5E5E5E", fg="#FFFFFF", font=self.controller.bold_font)
+            self.table.headers[0].configure(bg="#5E5E5E", fg="#FFFFFF")
+            self.table.grid(row=0, columnspan=3)
 
-        # Place Z as first element
-        for column in self.captured_data:
-            column.insert(0, column.pop())
+            # load cells with captured measurements
+            self.table.update_cells(self.captured_data)
 
-        print("sorted", sorted)
+        # No captured measurements
+        else:
+            # Show an empty message
+            self.empty_message.grid(row=0, columnspan=3)
 
-        self.table = TableLeftHeaders(self, rows=len(self.captured_data[0]), columns=len(self.captured_data),
-                                      header_values=self.sensor_headers, can_select_columns=True, button_command=self.delete_z)
-        # Set background of top row
-        for column in range(len(self.captured_data)):
-            self.table.cells[0][column].configure(bg="#5E5E5E", fg="#FFFFFF", font=self.controller.bold_font)
-        self.table.headers[0].configure(bg="#5E5E5E", fg="#FFFFFF")
-        self.table.grid(row=0, columnspan=3)
-
-        # load cells with captured measurements
-        self.table.update_cells(self.captured_data)
+            # disable save button
+            self.save_button.configure(state=DISABLED, cursor="arrow")
 
     def destroy_table(self):
         # Remove checkboxes and table from grid, and destroy them
@@ -84,8 +101,13 @@ class ResultsBPC(Frame):
         self.create_table()
 
     def on_leave_frame(self, event=None):
-        # Destroy captured measurements table
-        self.destroy_table()
+        # Destroy table if there are any captured measurements
+        if saved_measurement:
+            # Destroy captured measurements table
+            self.destroy_table()
+        # Otherwise hide empty message
+        else:
+            self.empty_message.grid_forget()
 
     def go_back(self):
         self.controller.show_frame("MeasureBPC")
