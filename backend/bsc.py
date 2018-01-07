@@ -7,7 +7,7 @@ import cv2
 import math
 
 
-__image_path= None
+__image_path = None
 __original_image = None
 __pixels_per_metric = None
 __contour_boxes = []
@@ -419,8 +419,8 @@ def reset_bsc_backend():
     global __original_image, __pixels_per_metric, __contour_boxes, __circumferences, __output_image
     __original_image = None
     __pixels_per_metric = None
-    __contour_boxes = []
-    __circumferences = []
+    __contour_boxes.clear()
+    __circumferences.clear()
     __output_image = None
 
 

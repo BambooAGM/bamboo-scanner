@@ -178,7 +178,7 @@ class PickCircumferencesBSC(Frame):
 
     def reset(self):
         self.selected_count_var.set(0)
-        self.selected_circumferences = []
+        self.selected_circumferences.clear()
 
         # destroy the image container
         if self.responsive_image is not None:

@@ -5,8 +5,8 @@ from tkinter import messagebox
 from tkinter import *
 from gui.widgets.grid_helpers import make_rows_responsive, make_columns_responsive
 from gui.widgets.custom import TableLeftHeaders, YellowButton, GreenButton
-from backend.bpc import save_measurements
-from backend.sensors_manager import getInstantRawSensorData, getCleanSensorData, openArduinoSerial, closeArduinoSerial
+from backend.bpc import save_measurements, saved_measurement
+from backend.sensors_manager import getInstantRawSensorData, getCleanSensorData, openArduinoSerial, closeArduinoSerial, clearCache
 
 
 def get_live_sensors(widget, reading_sensors, main_quit, kill_thread, no_arduino, disconnected, port_lock, capture_now):
@@ -41,7 +41,11 @@ def get_live_sensors(widget, reading_sensors, main_quit, kill_thread, no_arduino
             try:
                 # Data wants to be captured
                 if capture_now.is_set():
+                    # do not use cache
+                    clearCache()
+                    # Get sensor data
                     data = getCleanSensorData()
+                    print("saving", data)
                     # Save data in backend
                     save_measurements(data)
                     # clear once it has been saved
@@ -100,7 +104,6 @@ class MeasureBPC(Frame):
         self.count_str = StringVar()
         self.count_number = IntVar()
         self.count_number.trace("w", self.update_count_label)
-        self.count_number.set(0)
 
         # Loading message
         self.status_var = StringVar()
@@ -134,8 +137,8 @@ class MeasureBPC(Frame):
         make_columns_responsive(self)
 
     def on_show_frame(self, event=None):
-        # TODO update count label
-        # bpc.get_number_captured()
+        # TODO get count from function
+        self.count_number.set(len(saved_measurement))
 
         # Controls update callback
         self.do_update = True

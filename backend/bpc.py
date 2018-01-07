@@ -109,11 +109,11 @@ radius_of_ring = 15
 
 # Resets all global variables in case of a discard or return home
 def reset_bpc_backend():
-    global textDesc, sensorLiveMeasurements, sortedArray, finalArray
+    global textDesc, saved_measurement, sortedArray, finalArray
     textDesc = ""
-    sensorLiveMeasurements = []
-    finalArray = []
-    sortedArray = []
+    saved_measurement.clear()
+    # finalArray.clear()
+    # sortedArray.clear()
 
 
 # Gets current date for the generation of the text file, from the user's machine
@@ -153,9 +153,8 @@ def capture_measurement():
 
 def save_measurements(array):
     global saved_measurement
-    tosave = array
-    saved_measurement.append(tosave)
 
+    saved_measurement.append(array)
 
 
 # Sorts the measurements list for preview display and text file generation.

@@ -160,15 +160,13 @@ class TableLeftHeaders(Frame):
 
         :return: array of indices corresponding to deleted columns
         """
-        result = []
-
         if self.can_select_columns:
             result = []
             for column in range(self.columns):
                 if self.checkbox_values[column].get():
                     result.append(column)
 
-        return result
+            return result
 
 
 class ResponsiveImage(Frame):

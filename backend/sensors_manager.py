@@ -31,7 +31,7 @@ def clearCache():
     global usingCache, cacheStructuredSensorData
     
     usingCache = False
-    cacheStructuredSensorData = []
+    cacheStructuredSensorData.clear()
     print("Cache Cleared")
 
 
