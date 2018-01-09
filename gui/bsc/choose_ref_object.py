@@ -65,7 +65,7 @@ class RefObjectBSC(Frame):
         self.select_button = YellowButton(self, text="Use this object as reference",
                                           command=lambda: self.selected_object_var.set(self.current_contour_var.get()))
         self.stage1_widgets.append((self.select_button,
-                                    lambda: self.select_button.grid(row=2, column=3)))
+                                    lambda: self.select_button.grid(row=2, column=3, sticky=N)))
 
         # STAGE 2
 
@@ -207,7 +207,7 @@ class RefObjectBSC(Frame):
         self.ref_object_var.set("Selected Reference Object")
 
         # Update instructions
-        self.instructions_var.set("Now please enter the real measure (in centimeters) of the dimension given by the pink segment in the image.\n"
+        self.instructions_var.set("Now please tell us how long is the dimension given by the pink line in the image.\n"
                                   "Provide the most decimals for more accurate results!")
 
         # Hide stage 1
@@ -224,7 +224,7 @@ class RefObjectBSC(Frame):
 
         # Update responsive
         reset_both_responsive(self)
-        make_columns_responsive(self)
+        make_columns_responsive(self, ignored=[0, 1])
         make_rows_responsive(self, ignored=[0, 2, 3, 4, 5, 6, 7])
 
     def validate_float(self, action, value_if_allowed, text):

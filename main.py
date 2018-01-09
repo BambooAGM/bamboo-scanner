@@ -49,7 +49,7 @@ class BambooScanner(Tk):
         # Home button
         home_image = Image.open("assets/home.png")
         # resize home button image
-        home_image = resize_keep_aspect(home_image, w=home_image.width, h=home_image.height, max_w=100, max_h=60)
+        home_image = resize_keep_aspect(home_image, max_w=100, max_h=60)
         home_image = ImageTk.PhotoImage(home_image)
         self.home = Label(self.navbar, image=home_image, cursor="hand2", text="Go Home")
         self.home.image = home_image

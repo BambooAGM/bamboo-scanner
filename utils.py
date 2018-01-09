@@ -19,17 +19,18 @@ def get_date():
     return date
 
 
-def resize_keep_aspect(image, w, h, max_w, max_h):
+def resize_keep_aspect(image, max_w, max_h):
     """
     Resize an image while keeping aspect ratio.
 
-    :param w: current width
-    :param h: current height
+    :param image: The image to resize. Must be of PIL Image format
     :param max_w: max allowed width
     :param max_h: max allowed height
-    :param image: The image to resize. Must be of PIL Image format
     :return: The resized image in PIL Image format
     """
+    w = image.width
+    h = image.height
+
     ratio = min(max_w / w, max_h / h)
     (new_w, new_h) = (int(w * ratio), int(h * ratio))
 

@@ -1,14 +1,14 @@
 from tkinter import font
 from tkinter import *
 from PIL import ImageTk, Image
+from utils import resize_keep_aspect
 
 
 class YellowButton(Button):
 
     def __init__(self, parent, **kwargs):
         Button.__init__(self, parent, **kwargs)
-        self.configure(bg="#FF9900", relief=GROOVE, padx=10, pady=5, disabledforeground="#333333", cursor="hand2")
-
+        self.configure(bg="#FF9900", relief=GROOVE, padx=10, pady=5, cursor="hand2")
 
 class GreenButton(Button):
 
@@ -170,34 +170,42 @@ class TableLeftHeaders(Frame):
 
 
 class ResponsiveImage(Frame):
-    def __init__(self, master, image):
+    def __init__(self, master, image, tag="IMG"):
         Frame.__init__(self, master)
 
         # save image
         self.original = image
+        # image tag
+        self.tag = tag
 
         # make frame responsive
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
 
+        # source image in TK Image format
         self.image = ImageTk.PhotoImage(self.original)
-        self.display = Canvas(self, bd=0, highlightthickness=0)
-        self.display.create_image(0, 0, image=self.image, anchor=NW, tags="IMG")
-        self.display.grid(row=0, sticky=NSEW)
+
+        # create canvas and place image inside it
+        self.canvas = Canvas(self, borderwidth=0, highlightthickness=0)
+        self.canvas.create_image(0, 0, image=self.image, anchor=NW, tags=self.tag)
+        self.canvas.grid(row=0, sticky=NSEW)
 
         # the magic
         self.bind("<Configure>", self.resize)
 
     def resize(self, event):
-        size = (event.width, event.height)
-        resized = self.original.resize(size)
-        self.image = ImageTk.PhotoImage(resized)
-        self.display.delete("IMG")
-        self.display.create_image(0, 0, image=self.image, anchor=NW, tags="IMG")
+        # resize while keeping aspect ratio
+        resized = resize_keep_aspect(image=self.original, max_w=event.width, max_h=event.height)
 
+        # the new resized image, in TkImage format
+        self.image = ImageTk.PhotoImage(resized)
+        self.canvas.delete(self.tag)
+
+        # place image top-centered in the canvas
+        self.canvas.create_image(event.width/2, 0, image=self.image, anchor=N, tags=self.tag)
 
     # def change_image(self, image):
     #     self.original = image
     #     self.image = ImageTk.PhotoImage(self.original)
-    #     self.display.delete("IMG")
-    #     self.display.create_image(0, 0, image=self.image, anchor=NW, tags="IMG")
+    #     self.canvas.delete("IMG")
+    #     self.canvas.create_image(0, 0, image=self.image, anchor=NW, tags="IMG")
