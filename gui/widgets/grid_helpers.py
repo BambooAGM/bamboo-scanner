@@ -34,3 +34,13 @@ def make_rows_responsive(container, **kwargs):
     for row in range(rows):
         if row not in ignored:
             container.grid_rowconfigure(row, weight=1)
+
+
+def reset_both_responsive(container):
+    columns, rows = container.grid_size()
+
+    for column in range(columns):
+        container.grid_columnconfigure(column, weight=0)
+
+    for row in range(rows):
+        container.grid_rowconfigure(row, weight=0)

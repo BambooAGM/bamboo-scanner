@@ -13,6 +13,7 @@ class ResultsBPC(Frame):
         Frame.__init__(self, parent)
         self.controller = controller
         self.title="Review Your Measurements"
+        self.captured_data = []
         # TODO Generate headers ?
         self.sensor_headers = ["Z (cm)", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11", "S12"]
         self.initialize_widgets()

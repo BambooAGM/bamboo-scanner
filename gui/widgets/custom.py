@@ -201,9 +201,3 @@ class ResponsiveImage(Frame):
     #     self.image = ImageTk.PhotoImage(self.original)
     #     self.display.delete("IMG")
     #     self.display.create_image(0, 0, image=self.image, anchor=NW, tags="IMG")
-
-
-if __name__ == "__main__":
-    root = Tk()
-    app = ResponsiveImage(root)
-    app.mainloop()

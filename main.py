@@ -51,10 +51,13 @@ class BambooScanner(Tk):
         # resize home button image
         home_image = resize_keep_aspect(home_image, w=home_image.width, h=home_image.height, max_w=100, max_h=60)
         home_image = ImageTk.PhotoImage(home_image)
-        self.home = Label(self.navbar, image=home_image, cursor="hand2")
+        self.home = Label(self.navbar, image=home_image, cursor="hand2", text="Go Home")
         self.home.image = home_image
         # bind to click event
         self.home.bind("<Button-1>", self.go_home)
+        self.home.bind("<Enter>", self.on_enter_home_btn)
+        self.home.bind("<Leave>", self.on_leave_home_btn)
+
         self.home.grid(row=0, column=0, sticky=NSEW)
 
         # Page title
@@ -105,7 +108,7 @@ class BambooScanner(Tk):
         self.show_frame("Home")
 
     def go_home(self, event):
-        result = messagebox.askokcancel("Unsaved progress will be lost", "If you leave now, all progress will be lost.",
+        result = messagebox.askokcancel("Go Home?", "If you leave now, all unsaved progress will be lost.",
                                         default="cancel", icon="warning")
 
         if result:
@@ -119,6 +122,12 @@ class BambooScanner(Tk):
 
             # go home
             self.show_frame("Home")
+
+    def on_enter_home_btn(self, event):
+        self.home.configure(compound=BOTTOM)
+
+    def on_leave_home_btn(self, event):
+        self.home.configure(compound=NONE)
 
     def show_frame(self, page_name):
         """
@@ -204,7 +213,10 @@ class BambooScanner(Tk):
 
 if __name__ == "__main__":
     def exit_handler():
-        if messagebox.askokcancel("Quit", "Do you really wish to quit?", default="cancel", icon="warning"):
+        # Exit directly on home screen, otherwise ask for confirmation
+        if type(app.active_frame) == Home or messagebox.askokcancel("Exit Program",
+                                                                    "Are you sure you want to exit Bamboo Scanner?",
+                                                                    default="cancel", icon="warning"):
             # Close port before quitting
             app.main_quit.set()
             # Exit

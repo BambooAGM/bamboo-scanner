@@ -44,11 +44,12 @@ class ConfigBSC(Frame):
     def load_image(self):
         # open a file chooser dialog and allow the user to select a source image
         temp_path = filedialog.askopenfilename(title="Select an image to process",
-                                               filetypes=(("All files", "*.*"),
+                                               filetypes=(("JPG", "*.jpg"),
+                                                          ("JPEG", "*.jpeg"),
                                                           ("PNG", "*.png"),
-                                                          ("JPEG", "*.jpg")))
-
-        # TODO - check file extension, restrict to image
+                                                          ("TIF", "*.tif"),
+                                                          ("TIFF", "*.tiff"),
+                                                          ("Windows bitmaps", "*.bmp")))
 
         # ensure a file path was selected
         if len(temp_path) > 0:
