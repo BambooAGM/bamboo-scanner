@@ -24,6 +24,8 @@ class BambooScanner(Tk):
         # global program closing event (for threads)
         self.main_quit = threading.Event()
 
+        # START SHARED
+
         # Global fonts
         self.global_font_family = font.Font(family="Segoe UI Emoji")
         self.common_font = font.Font(family="Segoe UI Emoji", size=14)
@@ -37,6 +39,13 @@ class BambooScanner(Tk):
         self.option_add("*Button.Font", self.bold_font)
         self.option_add("*Label.Font", self.common_font)
 
+        # Common images
+        self.arrow_left = ImageTk.PhotoImage(Image.open("assets/arrow_left.png"))
+        self.arrow_right = ImageTk.PhotoImage(Image.open("assets/arrow_right.png"))
+        self.save_icon = ImageTk.PhotoImage(Image.open("assets/save.png"))
+
+        # END SHARED
+
         # Main page layout: hosts page content and global widgets
         self.container = Frame(self)
         # Container fills the entire window
@@ -49,41 +58,41 @@ class BambooScanner(Tk):
         # Home button
         home_image = Image.open("assets/home.png")
         # resize home button image
-        home_image = resize_keep_aspect(home_image, max_w=100, max_h=60)
+        home_image = resize_keep_aspect(home_image, max_w=100, max_h=37)
         home_image = ImageTk.PhotoImage(home_image)
-        self.home = Label(self.navbar, image=home_image, cursor="hand2", text="Go Home")
-        self.home.image = home_image
+        self.home_button = Label(self.navbar, image=home_image, cursor="hand2", text="Home")
+        self.home_button.image = home_image
+        self.home_button.grid(row=0, column=0, sticky=NSEW)
         # bind to click event
-        self.home.bind("<Button-1>", self.go_home)
-        self.home.bind("<Enter>", self.on_enter_home_btn)
-        self.home.bind("<Leave>", self.on_leave_home_btn)
+        self.home_button.bind("<Button-1>", self.go_home)
+        self.home_button.bind("<Enter>", self.on_enter_home_btn)
+        self.home_button.bind("<Leave>", self.on_leave_home_btn)
 
-        self.home.grid(row=0, column=0, sticky=NSEW)
+        # Back button
+        self.back_button = Button(self.navbar, image=self.arrow_left, cursor="hand2", text="Go back", compound=LEFT,
+                                  command=self.go_back, bg="#35AD35", fg="#FFFFFF", relief=GROOVE, padx=10)
+        self.back_button.grid(row=0, column=1, sticky=NSEW)
 
         # Page title
         self.title_var = StringVar()
         self.page_title = Label(self.navbar, textvariable=self.title_var,
                                 bg="#35AD35", fg="#FFFFFF", font=self.title_font)
-        self.page_title.grid(row=0, column=1, sticky=W, padx=10)
+        self.page_title.grid(row=0, column=2, sticky=W+E, padx=10)
 
         # Step indicator
         self.step = StringVar()
         self.page_step = Label(self.navbar, textvariable=self.step,
                                bg="#35AD35", fg="#FFFFFF")
-        self.page_step.grid(row=0, column=2, sticky=E, padx=10)
+        self.page_step.grid(row=0, column=3, sticky=E, padx=10)
 
-        make_columns_responsive(self.navbar, ignored=[0])
+        # make navbar responsive
+        make_columns_responsive(self.navbar, ignored=[0, 1, 3])
 
         # Bamboo
         bamboo_image = ImageTk.PhotoImage(Image.open("assets/bamboo.png"))
         self.bamboo = Label(self.container, image=bamboo_image)
         self.bamboo.image = bamboo_image
         self.bamboo.grid(row=1, column=0, sticky=NW)
-
-        # Common images
-        self.arrow_left = ImageTk.PhotoImage(Image.open("assets/arrow_left.png"))
-        self.arrow_right = ImageTk.PhotoImage(Image.open("assets/arrow_right.png"))
-        self.save_icon = ImageTk.PhotoImage(Image.open("assets/save.png"))
 
         # The class names for both BSC and BPC
         self.bsc_pages = (ConfigBSC, RefObjectBSC, PickCircumferencesBSC, ResultsBSC)
@@ -107,7 +116,34 @@ class BambooScanner(Tk):
         self.active_frame = None
         self.show_frame("Home")
 
-    def go_home(self, event):
+    def go_back(self, event=None):
+        # Check if active frame is from BPC
+        for i, page in enumerate(self.bpc_pages):
+            # find the active page
+            if type(self.active_frame) == page:
+                # first page goes back to Home
+                if i == 0:
+                    self.go_home()
+                else:
+                    # name of previous frame
+                    page_name = self.bpc_pages[i-1].__name__
+                    self.show_frame(page_name)
+                return
+
+        # Must be in BSC then
+        for i, page in enumerate(self.bsc_pages):
+            # find the active page
+            if type(self.active_frame) == page:
+                # first page goes back to Home
+                if i == 0:
+                    self.go_home()
+                else:
+                    # name of previous frame
+                    page_name = self.bsc_pages[i-1].__name__
+                    self.show_frame(page_name)
+                return
+
+    def go_home(self, event=None):
         result = messagebox.askokcancel("Go Home?", "If you leave now, all unsaved progress will be lost.",
                                         default="cancel", icon="warning")
 
@@ -124,10 +160,10 @@ class BambooScanner(Tk):
             self.show_frame("Home")
 
     def on_enter_home_btn(self, event):
-        self.home.configure(compound=BOTTOM)
+        self.home_button.configure(compound=BOTTOM)
 
     def on_leave_home_btn(self, event):
-        self.home.configure(compound=NONE)
+        self.home_button.configure(compound=NONE)
 
     def show_frame(self, page_name):
         """
@@ -186,26 +222,42 @@ class BambooScanner(Tk):
     def restore_navbar(self):
         self.navbar.grid()
 
+    def reset_BPC_GUI(self, **kwargs):
+        ignored = kwargs.pop("ignored", [])
+        if kwargs:
+            raise TypeError('Unexpected **kwargs: %r' % kwargs)
+
+        for page in self.bpc_pages:
+            if page not in ignored:
+                name = page.__name__
+                self.frames[name].reset()
+
     def reset_BPC(self):
         """
         Reset all the BPC GUI frames and its backend module
         """
         # reset GUI
-        for page in self.bpc_pages:
-            name = page.__name__
-            self.frames[name].reset()
+        self.reset_BPC_GUI()
 
         # reset backend
         reset_bpc_backend()
+
+    def reset_BSC_GUI(self, **kwargs):
+        ignored = kwargs.pop("ignored", [])
+        if kwargs:
+            raise TypeError('Unexpected **kwargs: %r' % kwargs)
+
+        for page in self.bsc_pages:
+            if page not in ignored:
+                name = page.__name__
+                self.frames[name].reset()
 
     def reset_BSC(self):
         """
         Reset all the BSC GUI frames and its backend module
         """
         # reset GUI
-        for page in self.bsc_pages:
-            name = page.__name__
-            self.frames[name].reset()
+        self.reset_BSC_GUI()
 
         # reset backend
         reset_bsc_backend()

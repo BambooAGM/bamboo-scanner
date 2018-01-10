@@ -38,6 +38,12 @@ class ConfigBSC(Frame):
         self.begin_button = YellowButton(self, text="BEGIN", command=self.begin, image=self.controller.arrow_right, compound=RIGHT)
         self.begin_button.grid(row=2, column=1, sticky=SE, padx=20, pady=20)
 
+        # Update widgets
+        self.on_image_path_change()
+
+        # visited flag
+        self.visit_counter = 0
+
         make_rows_responsive(self)
         make_columns_responsive(self)
 
@@ -77,9 +83,28 @@ class ConfigBSC(Frame):
             self.choose_button.configure(text="Choose an image")
 
     def begin(self):
-        status = process_image(self.image_path.get(), new_h=self.image.height)
+        temp_path = self.image_path.get()
+
+        # Data from previous processing
+        old_img_path = get_image_path()
+        old_num_of_boxes = get_number_boxes()
+
+        # reset backend if this is not a fresh session
+        if self.visit_counter != 1:
+            reset_bsc_backend()
+
+        # Process image
+        status = process_image(temp_path)
 
         if status == "OK":
+            # Not a fresh session and the image has changed
+            if self.visit_counter > 1 and (temp_path != old_img_path or old_num_of_boxes != get_number_boxes()):
+                # reset the BSC GUI except this frame
+                self.controller.reset_BSC_GUI(ignored=[type(self)])
+
+                # make this the 1st visit
+                self.visit_counter = 1
+
             # Go to results page
             self.controller.show_frame("RefObjectBSC")
         else:
@@ -89,15 +114,17 @@ class ConfigBSC(Frame):
             self.image_path.set("")
 
     def on_show_frame(self, event=None):
-        self.on_image_path_change()
+        self.visit_counter += 1
 
     def reset(self):
-        # update the container before removing the image reference
-        # self.image_container.configure(image=self.placeholder_image)
-        # self.image = None
+        # reset to placeholder image
         self.responsive_image.destroy()
         self.responsive_image = ResponsiveImage(self, self.placeholder_image)
         self.responsive_image.grid(row=0, column=0, rowspan=3)
 
+        # Clear image and path
         self.image = None
         self.image_path.set("")
+
+        # visited flag
+        self.visit_counter = 0

@@ -3,7 +3,7 @@ from tkinter import filedialog, messagebox
 from tkinter import *
 from backend.bsc import *
 from gui.widgets.custom import RedButton, YellowButton, ResponsiveImage
-from gui.widgets.grid_helpers import make_columns_responsive
+from gui.widgets.grid_helpers import make_columns_responsive, make_rows_responsive
 
 
 class ResultsBSC(Frame):
@@ -22,9 +22,7 @@ class ResultsBSC(Frame):
         self.result_message = Label(self, text="Final Circumferences", font=self.controller.header_font)
         self.result_message.grid(row=0, column=0, columnspan=2, pady=20)
 
-        # Result image
-        # self.image_container = Label(self)
-        # self.image_container.grid(row=1, columnspan=2)
+        # Result image row=1, col=0, columnspan=2
 
         # save hint
         self.result_message = Label(self, text="Save to see all polar coordinates.")
@@ -39,14 +37,14 @@ class ResultsBSC(Frame):
         self.discard_button = RedButton(self, text="DISCARD", command=self.discard)
         self.discard_button.grid(row=3, column=1, sticky=W, padx=5, pady=20)
 
+        make_rows_responsive(self, ignored=[0, 2, 3])
         make_columns_responsive(self)
 
     def on_show_frame(self, event=None):
         # render image with all circumferences
         self.image = render_final_circumferences()
-        # self.image_container.configure(image=self.image)
         self.responsive_image = ResponsiveImage(self, self.image)
-        self.responsive_image.grid(row=1, columnspan=2)
+        self.responsive_image.grid(row=1, column=0, columnspan=2, sticky=NSEW)
 
     def save(self):
         date = datetime.now().strftime('%Y-%m-%d_%H%M%S')

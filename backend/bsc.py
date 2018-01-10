@@ -15,14 +15,21 @@ __circumferences = []  # list of tuples: (contour, (centroidX, centroidY))
 __output_image = None
 
 
+def get_image_path():
+    return __image_path
+
+
+def get_number_boxes():
+    return len(__contour_boxes)
+
+
 # STEP 1: find reference object
 # STEP 2: find circumferences
-def process_image(image_path, new_h):
+def process_image(image_path):
     """
     Finds contours that may be possible reference objects.
 
     :param image_path: path to source image in filesystem.
-    :param new_h: height to resize image
     :return: Status message
     """
     global __image_path, __original_image, __contour_boxes, __circumferences
@@ -48,7 +55,7 @@ def process_image(image_path, new_h):
     # method:
     _, cnts, _ = cv2.findContours(image=temp_image, mode=cv2.RETR_LIST, method=cv2.CHAIN_APPROX_NONE)
     # sort contours from left to right
-    (cnts, _) = contours.sort_contours(cnts)
+    # (cnts, _) = contours.sort_contours(cnts)
 
     counter = 1
     for c in cnts:
@@ -100,11 +107,11 @@ def process_image(image_path, new_h):
             aspect_ratio_ok = aspect_ratio >= 0.8 and aspect_ratio <= 1.2
 
             if size_ok and solidity_ok and aspect_ratio_ok:
-                print("Object", counter)
-                counter += 1
-                print("aspect ratio", aspect_ratio)
-                print("extent", extent)
-                print("solidity", solidity)
+                # print("Object", counter)
+                # counter += 1
+                # print("aspect ratio", aspect_ratio)
+                # print("extent", extent)
+                # print("solidity", solidity)
 
                 # get centroid
                 M = cv2.moments(c)
@@ -141,13 +148,12 @@ def process_image(image_path, new_h):
 
 def render_boxes():
     """
-    Generates 2 images of the specified bounding box (with horizontal and vertical bisections)
+    Generates images of each contour's bounding box (with horizontal and vertical bisections)
 
-    :return: result = { "horizontal": (TkImage, width), "vertical": (TkImage, height) }
+    :return: a list of bounding boxes in the following format: { "horizontal": (TkImage, width), "vertical": (TkImage, height) }
     """
     global __original_image, __contour_boxes
 
-    # box = __contour_boxes[index]
     boxes = []
 
     for box in __contour_boxes:
@@ -156,7 +162,7 @@ def render_boxes():
         orig_horizontal_line = __original_image.copy()
 
         # draw the actual boxes
-        cv2.drawContours(orig_horizontal_line, [box.astype("int")], -1, (0, 255, 0), 2)
+        cv2.drawContours(orig_horizontal_line, [box.astype("int")], -1, color=(0, 255, 0), thickness=5)
 
         # loop over the original points and draw them
         for (x, y) in box:
@@ -186,27 +192,23 @@ def render_boxes():
         cv2.circle(orig_horizontal_line, (int(tr_br_x), int(tr_br_y)), 5, (255, 0, 0), -1)
 
         # draw lines between the midpoints
-        cv2.line(orig_vertical_line, (int(tl_tr_x), int(tl_tr_y)), (int(bl_br_x), int(bl_br_y)), (255, 0, 255), 2)
-        cv2.line(orig_horizontal_line, (int(tl_bl_x), int(tl_bl_y)), (int(tr_br_x), int(tr_br_y)), (255, 0, 255), 2)
+        cv2.line(orig_vertical_line, (int(tl_tr_x), int(tl_tr_y)), (int(bl_br_x), int(bl_br_y)), (255, 0, 255), thickness=5)
+        cv2.line(orig_horizontal_line, (int(tl_bl_x), int(tl_bl_y)), (int(tr_br_x), int(tr_br_y)), (255, 0, 255), thickness=5)
 
         # draw text on midpoint of lines
         # vertical
         (m_vertical_x, m_vertical_y) = midpoint((tl_tr_x, tl_tr_y), (bl_br_x, bl_br_y))
-        cv2.putText(orig_vertical_line, "X", (int(m_vertical_x - 5), int(m_vertical_y)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 255), 2)
+        cv2.putText(orig_vertical_line, "cm?", (int(m_vertical_x + 10), int(m_vertical_y)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 255), thickness=3)
         # horizontal
         (m_horizontal_x, m_horizontal_y) = midpoint((tl_bl_x, tl_bl_y), (tr_br_x, tr_br_y))
-        cv2.putText(orig_horizontal_line, "X", (int(m_horizontal_x), int(m_horizontal_y + 5)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 255), 2)
+        cv2.putText(orig_horizontal_line, "cm?", (int(m_horizontal_x), int(m_horizontal_y + 40)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 255), thickness=3)
 
         # compute the Euclidean distance between the midpoints
         box_height = dist.euclidean((tl_tr_x, tl_tr_y), (bl_br_x, bl_br_y))
         box_width = dist.euclidean((tl_bl_x, tl_bl_y), (tr_br_x, tr_br_y))
 
-        # result = {
-        #     "horizontal": (convert_cv_to_tk(orig_horizontal_line), box_width),
-        #     "vertical": (convert_cv_to_tk(orig_vertical_line), box_height)
-        # }
         contour_box = {
             "horizontal": (convert_cv_to_pil(orig_horizontal_line), box_width),
             "vertical": (convert_cv_to_pil(orig_vertical_line), box_height)
@@ -229,10 +231,9 @@ def render_all_circumferences():
         cnt = circumference[0]
         circ_image = __original_image.copy()
 
-        cv2.drawContours(circ_image, [cnt], 0, color=(0, 255, 0), thickness=2)
+        cv2.drawContours(circ_image, [cnt], 0, color=(0, 255, 0), thickness=3)
 
-        # convert to TkImage and add to result
-        # circumference_images.append(convert_cv_to_tk(circ_image))
+        # convert to PIL and add to result
         circumference_images.append(convert_cv_to_pil(circ_image))
 
     return circumference_images
@@ -266,6 +267,7 @@ def sort_circumferences():
     # outer circumference should come first
     if area_2 > area_1:
         __circumferences.reverse()
+        print("order reversed")
 
 
 def apply_hull_to_outer():
@@ -282,6 +284,7 @@ def render_final_circumferences():
     global __output_image
 
     output = __original_image.copy()
+    # red, cyan
     colors = ((0, 0, 255), (255, 255, 0))
 
     sort_circumferences()
@@ -291,10 +294,9 @@ def render_final_circumferences():
         cnt = circumference[0]
         cx, cy = circumference[1]
 
-        cv2.drawContours(output, [cnt], 0, color=color, thickness=2)
-        cv2.circle(output, center=(cx, cy), radius=3, color=color, thickness=-1)
+        cv2.drawContours(output, [cnt], 0, color=color, thickness=3)
+        cv2.circle(output, center=(cx, cy), radius=5, color=color, thickness=-1)
 
-    # __output_image = convert_cv_to_tk(output)
     __output_image = convert_cv_to_pil(output)
 
     return __output_image
@@ -425,7 +427,7 @@ def reset_bsc_backend():
 
 
 if __name__ == "__main__":
-    print(process_image("C:/Users/arosa/PycharmProjects/BambooScanner/test3a.jpg", 800))
+    print(process_image("C:/Users/arosa/PycharmProjects/BambooScanner/test3a.jpg"))
     set_pixels_per_metric(5.0)
     # print(circumferences_to_polar())
     # render_all_circumferences()

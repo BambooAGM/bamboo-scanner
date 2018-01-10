@@ -199,10 +199,10 @@ def read_ultrasonic(index, array):
 # Deletes the element 'index' at the given array
 def delete_measurement(array):
     global saved_measurement
-    if array <= 0:
+    if not array:
         return saved_measurement
     adjust = 0
-    for i in range(0, len(array)-1):
+    for i in range(0, len(array)):
         del saved_measurement[array[i]-adjust]
         adjust += 1
     return saved_measurement

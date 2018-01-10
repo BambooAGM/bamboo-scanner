@@ -11,6 +11,7 @@ class RefObjectBSC(Frame):
         self.controller = controller
         self.title = "Configure Scale"
         self.responsive_image = None
+        self.boxes = []
         self.stage1_widgets = []
         self.stage2_widgets = []
         self.initialize_widgets()
@@ -124,9 +125,17 @@ class RefObjectBSC(Frame):
         self.selected_object_var.set("")
 
     def on_show_frame(self, event=None):
-        # fetch 1st contour
+        # fetch all reference objects
         self.boxes = render_boxes()
-        self.show_contour(0)
+
+        # Show the last object we were browsing, or the 1st one if this is a fresh session
+        try:
+            self.show_contour(self.current_contour_var.get())
+        # In case something weird happens
+        except IndexError:
+            print("could not show contour; resetting")
+            self.reset()
+            self.on_show_frame()
 
     def show_contour(self, index):
         self.box = self.boxes[index]
@@ -256,6 +265,9 @@ class RefObjectBSC(Frame):
         self.real_dimension_var.set("0.00")
         self.real_dimension.configure(fg=self.placeholder_color)
 
+        # force focus out
+        self.focus()
+
     def on_focusin_dimension_entry(self, event):
         # clear placeholder on entry focus
         if self.real_dimension["fg"] == self.placeholder_color:
@@ -293,14 +305,20 @@ class RefObjectBSC(Frame):
             self.controller.show_frame("ResultsBSC")
 
     def reset(self):
-        # reset real dimension entry field
-        self.set_placeholder()
-
         # destroy the image container
         if self.responsive_image is not None:
             self.responsive_image.grid_forget()
             self.responsive_image.destroy()
             self.responsive_image = None
 
+        # reset real dimension entry field
+        self.set_placeholder()
+
         # clear selected object; start in stage 1
         self.selected_object_var.set("")
+
+        # clear ref objects
+        self.boxes.clear()
+
+        # Start showing 1st contour box
+        self.current_contour_var.set(0)
