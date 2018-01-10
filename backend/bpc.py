@@ -1,12 +1,7 @@
-import random
 import time
 import math
 import numpy as np
 
-#import matplotlib.pyplot as plt
-#import plotly.plotly as py
-#from plotly.graph_objs import *
-#from bpc_calibration import getCleanSensorData
 
 sample_description = ""
 textDescTest = " This is a test for BPC text file generation. \n"

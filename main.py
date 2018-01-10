@@ -1,8 +1,8 @@
-import threading
 from tkinter import font, messagebox
 from tkinter import *
 from PIL import ImageTk, Image
 from backend.bpc import reset_bpc_backend
+from backend.bpc_threading import main_quit
 from backend.bsc import reset_bsc_backend
 from gui.home import Home
 from gui.bsc.choose_image import ConfigBSC
@@ -20,9 +20,6 @@ class BambooScanner(Tk):
 
     def __init__(self):
         Tk.__init__(self)
-
-        # global program closing event (for threads)
-        self.main_quit = threading.Event()
 
         # START SHARED
 
@@ -270,7 +267,7 @@ if __name__ == "__main__":
                                                                     "Are you sure you want to exit Bamboo Scanner?",
                                                                     default="cancel", icon="warning"):
             # Close port before quitting
-            app.main_quit.set()
+            main_quit.set()
             # Exit
             app.destroy()
 
