@@ -1,7 +1,8 @@
 from tkinter import *
+
 from backend.bpc import set_sampleDescription
-from gui.widgets.grid_helpers import make_columns_responsive, make_rows_responsive
 from gui.widgets.custom import ScrollableTextArea, YellowButton
+from gui.widgets.helpers import make_columns_responsive, make_rows_responsive
 
 
 class ConfigBPC(Frame):

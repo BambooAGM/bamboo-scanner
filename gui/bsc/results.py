@@ -1,9 +1,10 @@
 from datetime import datetime
-from tkinter import filedialog, messagebox
 from tkinter import *
+from tkinter import filedialog, messagebox
+
 from backend.bsc import *
 from gui.widgets.custom import RedButton, YellowButton, ResponsiveImage
-from gui.widgets.grid_helpers import make_columns_responsive, make_rows_responsive
+from gui.widgets.helpers import make_columns_responsive, make_rows_responsive
 
 
 class ResultsBSC(Frame):

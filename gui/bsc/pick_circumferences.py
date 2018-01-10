@@ -1,7 +1,8 @@
 from tkinter import *
+
 from backend.bsc import *
 from gui.widgets.custom import YellowButton, GreenButton, RedButton, ResponsiveImage
-from gui.widgets.grid_helpers import make_rows_responsive, make_columns_responsive
+from gui.widgets.helpers import make_columns_responsive
 
 
 class PickCircumferencesBSC(Frame):

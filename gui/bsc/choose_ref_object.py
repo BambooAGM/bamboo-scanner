@@ -1,7 +1,8 @@
 from tkinter import *
+
 from backend.bsc import *
 from gui.widgets.custom import YellowButton, GreenButton, ResponsiveImage
-from gui.widgets.grid_helpers import make_rows_responsive, make_columns_responsive, reset_both_responsive
+from gui.widgets.helpers import make_rows_responsive, make_columns_responsive, reset_both_responsive
 
 
 class RefObjectBSC(Frame):

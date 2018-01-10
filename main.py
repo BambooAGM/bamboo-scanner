@@ -1,19 +1,20 @@
-from tkinter import font, messagebox
 from tkinter import *
+from tkinter import font, messagebox
+
 from PIL import ImageTk, Image
+
 from backend.bpc import reset_bpc_backend
 from backend.bpc_threading import main_quit
 from backend.bsc import reset_bsc_backend
-from gui.home import Home
+from gui.bpc.configuration import ConfigBPC
+from gui.bpc.measure import MeasureBPC
+from gui.bpc.results import ResultsBPC
 from gui.bsc.choose_image import ConfigBSC
 from gui.bsc.choose_ref_object import RefObjectBSC
 from gui.bsc.pick_circumferences import PickCircumferencesBSC
 from gui.bsc.results import ResultsBSC
-from gui.bpc.configuration import ConfigBPC
-from gui.bpc.measure import MeasureBPC
-from gui.bpc.results import ResultsBPC
-from gui.widgets.grid_helpers import make_rows_responsive, make_columns_responsive
-from utils import resize_keep_aspect
+from gui.home import Home
+from gui.widgets.helpers import make_rows_responsive, make_columns_responsive, resize_keep_aspect
 
 
 class BambooScanner(Tk):

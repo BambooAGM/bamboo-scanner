@@ -1,7 +1,9 @@
-from tkinter import font
 from tkinter import *
-from PIL import ImageTk, Image
-from utils import resize_keep_aspect
+from tkinter import font
+
+from PIL import ImageTk
+
+from gui.widgets.helpers import resize_keep_aspect
 
 
 class YellowButton(Button):
@@ -9,6 +11,7 @@ class YellowButton(Button):
     def __init__(self, parent, **kwargs):
         Button.__init__(self, parent, **kwargs)
         self.configure(bg="#FF9900", relief=GROOVE, padx=10, pady=5, cursor="hand2")
+
 
 class GreenButton(Button):
 

@@ -1,8 +1,9 @@
-from tkinter import filedialog, messagebox
 from tkinter import *
+from tkinter import filedialog, messagebox
+
 from backend.bsc import *
 from gui.widgets.custom import YellowButton, GreenButton, ResponsiveImage
-from gui.widgets.grid_helpers import make_rows_responsive, make_columns_responsive
+from gui.widgets.helpers import make_rows_responsive, make_columns_responsive
 
 
 class ConfigBSC(Frame):

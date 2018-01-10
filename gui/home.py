@@ -1,8 +1,10 @@
-from tkinter import font
 from tkinter import *
+from tkinter import font
+
 from PIL import Image, ImageTk
+
 from gui.widgets.custom import GreenButton
-from gui.widgets.grid_helpers import make_columns_responsive, make_rows_responsive
+from gui.widgets.helpers import make_columns_responsive, make_rows_responsive
 
 
 class Home(Frame):

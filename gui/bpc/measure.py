@@ -1,10 +1,11 @@
 import queue
-from tkinter import messagebox
 from tkinter import *
+from tkinter import messagebox
+
 from backend.bpc import saved_measurement
 from backend.bpc_threading import *
-from gui.widgets.grid_helpers import make_rows_responsive, make_columns_responsive
 from gui.widgets.custom import TableLeftHeaders, YellowButton, GreenButton
+from gui.widgets.helpers import make_rows_responsive, make_columns_responsive
 
 
 class MeasureBPC(Frame):

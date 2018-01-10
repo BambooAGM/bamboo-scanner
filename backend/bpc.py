@@ -1,7 +1,8 @@
-import time
 import math
+
 import numpy as np
 
+from backend.utils import get_timestamp
 
 sample_description = ""
 textDescTest = " This is a test for BPC text file generation. \n"
@@ -109,12 +110,6 @@ def reset_bpc_backend():
     saved_measurement.clear()
     # finalArray.clear()
     # sortedArray.clear()
-
-
-# Gets current date for the generation of the text file, from the user's machine
-def get_date():
-    date = time.strftime("Created on %m/%d/%y %I:%M %p \n")
-    return date
 
 
 # Sample Description, user input
@@ -288,7 +283,7 @@ def generate_textfile(array):
     array = sort_ByZeta(array)
     f = open("Samples.txt", "w+")
     f.write(set_sampleDescription(textDescTest))
-    f.write(get_date())
+    f.write(get_timestamp())
     f.write("Samples take %s \n" % (len(array)))
     f.write(" ")
     for i in range(0, len(array)):

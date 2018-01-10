@@ -1,10 +1,11 @@
 import copy
 from datetime import datetime
-from tkinter import filedialog, messagebox
 from tkinter import *
+from tkinter import filedialog, messagebox
+
 from backend.bpc import generate_textfile, saved_measurement, delete_measurement, sort_ByZeta
-from gui.widgets.grid_helpers import make_columns_responsive, make_rows_responsive
 from gui.widgets.custom import TableLeftHeaders, GreenButton, YellowButton, RedButton
+from gui.widgets.helpers import make_columns_responsive, make_rows_responsive
 
 
 class ResultsBPC(Frame):

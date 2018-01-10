@@ -1,11 +1,12 @@
-from PIL import ImageTk, Image
-from scipy.spatial import distance as dist
-from imutils import contours, perspective, resize
-from utils import rect_to_polar, get_date
-import numpy as np
-import cv2
 import math
 
+import cv2
+import numpy as np
+from PIL import ImageTk, Image
+from imutils import perspective
+from scipy.spatial import distance as dist
+
+from backend.utils import rect_to_polar, get_timestamp
 
 __image_path = None
 __original_image = None
@@ -51,11 +52,7 @@ def process_image(image_path):
     temp_image = do_pre_processing(__original_image)
 
     # find contours
-    # mode:
-    # method:
     _, cnts, _ = cv2.findContours(image=temp_image, mode=cv2.RETR_LIST, method=cv2.CHAIN_APPROX_NONE)
-    # sort contours from left to right
-    # (cnts, _) = contours.sort_contours(cnts)
 
     counter = 1
     for c in cnts:
@@ -86,15 +83,11 @@ def process_image(image_path):
         if len(approx) > 10 and len(approx) < 20:
             # filter with contour properties
 
-            # BOUNDING RECTANGLE
+            # Bounding rectangle
             x, y, w, h = cv2.boundingRect(c)
 
             # aspect ratio
             aspect_ratio = float(w) / h
-
-            # extent
-            rect_area = w * h
-            extent = float(area) / rect_area
 
             # solidity
             hull = cv2.convexHull(c)
@@ -116,14 +109,6 @@ def process_image(image_path):
                 # get centroid
                 M = cv2.moments(c)
                 (cx, cy) = int(M['m10'] / M['m00']), int(M['m01'] / M['m00'])
-
-                # get real points
-                # mask = np.zeros(temp_image.shape, np.uint8)
-                # cv2.drawContours(mask, [c], 0, 255, -1)
-                # # pixelpoints = np.transpose(np.nonzero(mask))
-                # pixelpoints = cv2.findNonZero(mask)
-                # print("pixelpoints", len(pixelpoints))
-                # print("contour", len(c))
 
                 # Save circumference, centroid, and hull
                 circumference = (c, (cx, cy))
@@ -260,14 +245,14 @@ def sort_circumferences():
     circumference_1 = __circumferences[0]
     circumference_2 = __circumferences[1]
 
-    # find out which is bigger
+    # find out which contour is bigger
     area_1 = len(circumference_1[0])
     area_2 = len(circumference_2[0])
 
     # outer circumference should come first
     if area_2 > area_1:
         __circumferences.reverse()
-        print("order reversed")
+        print("circumferences order reversed")
 
 
 def apply_hull_to_outer():
@@ -341,7 +326,7 @@ def generate_text_file(file_path):
         f = open(file_path, "w+")
         f.write("Image processed: %s\n" % __image_path)
         f.write("\n")
-        f.write(get_date())
+        f.write(get_timestamp())
         f.write("\n")
 
         tags = ("Outer Circumference", "Inner Circumference")
