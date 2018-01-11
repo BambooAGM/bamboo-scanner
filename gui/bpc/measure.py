@@ -31,20 +31,25 @@ class MeasureBPC(Frame):
         self.count_number = IntVar()
         self.count_number.trace("w", self.update_count_label)
 
-        # Loading message
+        # Status message
         self.status_var = StringVar()
-        self.status_message = Label(self, textvariable=self.status_var, font=self.controller.header_font)
-        self.status_message.grid(row=0, column=0, columnspan=2)
-
-        # 12 IR sensors
-        sensor_headers = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11", "S12"]
-        self.table = TableLeftHeaders(self, rows=len(sensor_headers), columns=1, header_values=sensor_headers)
-        self.table.grid(row=1, column=0, rowspan=4)
+        self.status_message = Label(self, textvariable=self.status_var, font=self.controller.header_font, relief=GROOVE,
+                                    padx=10, pady=10)
+        self.status_message.grid(row=0, column=0, sticky=EW, padx=40, pady=20)
 
         # Sensor Z
         self.z_value = StringVar()
         self.z_label = Label(self, textvariable=self.z_value, font=self.controller.important_font)
-        self.z_label.grid(row=1, column=1, sticky=S)
+        self.z_label.grid(row=1, column=0, sticky=S)
+
+        # 12 IR sensors
+        sensor_headers = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11", "S12"]
+        self.table = TableLeftHeaders(self, rows=len(sensor_headers), columns=1, header_values=sensor_headers)
+        self.table.grid(row=2, column=0, rowspan=2)
+
+        # calibrate button
+        self.calibrate_button = GreenButton(self, text="Calibrate Sensors", command=self.calibrate)
+        self.calibrate_button.grid(row=0, column=1, pady=20)
 
         # captured count
         self.captured_count = Label(self, textvariable=self.count_str, font=self.controller.bold_font)
@@ -78,8 +83,7 @@ class MeasureBPC(Frame):
 
     def run_live_thread(self):
         self.live_thread = threading.Thread(target=get_live_sensors, name="live_sensors",
-                                            args=(self, reading_sensors, main_quit, kill_thread, no_arduino,
-                                                  disconnected, port_lock, capture_now))
+                                            args=(self,))
         self.live_thread.start()
 
     def update_live_gui(self):
@@ -119,11 +123,18 @@ class MeasureBPC(Frame):
             self.status_var.set("Capturing data...")
 
             # Disable buttons
-            self.capture_button.configure(state=DISABLED, cursor="wait")
-            self.results_button.configure(state=DISABLED, cursor="wait")
+            self.disable_buttons()
 
             # message has been set
             self.showing_message = True
+
+        # Calibrating sensors
+        elif calibrate_now.is_set():
+            # Show status message
+            self.status_var.set("Calibrating sensors...")
+
+            # Disable buttons
+            self.disable_buttons()
 
         # Update live feed
         elif reading_sensors.is_set() and not capture_now.is_set():
@@ -142,14 +153,7 @@ class MeasureBPC(Frame):
                         self.status_var.set("Ready!")
 
                         # Restore buttons
-                        self.capture_button.configure(state=NORMAL, cursor="hand2")
-
-                        # only enable view results if there are any
-                        if self.count_number.get():
-                            self.results_button.configure(state=NORMAL, cursor="hand2")
-                        # leave it disabled, but with a different cursor
-                        else:
-                            self.results_button.configure(state=DISABLED, cursor="arrow")
+                        self.restore_buttons()
 
                         # message has been removed
                         self.showing_message = False
@@ -161,11 +165,10 @@ class MeasureBPC(Frame):
         # Sensors are still initializing
         elif not reading_sensors.is_set() and self.do_update and not self.showing_message:
             # Show loading message
-            self.status_var.set("One moment please... Initializing sensors.")
+            self.status_var.set("Connecting to sensors...")
 
             # Disable buttons
-            self.capture_button.configure(state=DISABLED, cursor="wait")
-            self.results_button.configure(state=DISABLED, cursor="wait")
+            self.disable_buttons()
 
             # message has been set
             self.showing_message = True
@@ -174,11 +177,33 @@ class MeasureBPC(Frame):
         if self.do_update:
             self.after(100, self.update_live_gui)
 
+    def restore_buttons(self):
+        self.calibrate_button.configure(state=NORMAL, cursor="hand2")
+        self.capture_button.configure(state=NORMAL, cursor="hand2")
+
+        # only enable view results if there are any
+        if self.count_number.get():
+            self.results_button.configure(state=NORMAL, cursor="hand2")
+        # leave it disabled, but with a different cursor
+        else:
+            self.results_button.configure(state=DISABLED, cursor="arrow")
+
+    def disable_buttons(self):
+        self.calibrate_button.configure(state=DISABLED, cursor="wait")
+        self.capture_button.configure(state=DISABLED, cursor="wait")
+        self.results_button.configure(state=DISABLED, cursor="wait")
+
     def on_leave_frame(self, event=None):
         # stop live feed and close serial port
         kill_thread.set()
         reading_sensors.clear()
         self.do_update = False
+
+    def calibrate(self):
+        # only one at a time
+        if not calibrate_now.is_set():
+            # Let the worker thread handle it
+            calibrate_now.set()
 
     def capture(self):
         # only one at a time

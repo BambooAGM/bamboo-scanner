@@ -1,7 +1,7 @@
 from tkinter import *
 
 from backend.bsc import *
-from gui.widgets.custom import YellowButton, GreenButton, ResponsiveImage
+from gui.widgets.custom import YellowButton, GreenButton, ResponsiveImage, EntryWithPlaceholder
 from gui.widgets.helpers import make_rows_responsive, make_columns_responsive, reset_both_responsive
 
 
@@ -97,19 +97,11 @@ class RefObjectBSC(Frame):
         # %d = Type of action (1=insert, 0=delete, -1 for others)
         # %P = value of the entry if the edit is allowed
         # %S = the text string being inserted or deleted, if any
-        validate_cmd = (self.register(self.validate_float), '%d', '%P', '%S')
-        self.real_dimension = Entry(self, textvariable=self.real_dimension_var, validate="key", validatecommand=validate_cmd)
+        validate_cmd = (self.register(self.validate_dimension), '%d', '%P', '%S')
+        self.real_dimension = EntryWithPlaceholder(self, text_var=self.real_dimension_var, placeholder_text="0.00",
+                                                   validate="key", validatecommand=validate_cmd, textvariable=self.real_dimension_var)
         self.stage2_widgets.append((self.real_dimension,
                                     lambda: self.real_dimension.grid(row=6, column=3, padx=60, sticky=NW)))
-
-        # save the entry's text color
-        self.default_entry_fg_color = self.real_dimension["fg"]
-        # Entry placeholder color
-        self.placeholder_color = "grey"
-
-        # bind to focus in/out of entry to handle placeholder
-        self.real_dimension.bind("<FocusIn>", self.on_focusin_dimension_entry)
-        self.real_dimension.bind("<FocusOut>", self.on_focusout_dimension_entry)
 
         # Invalid dimension message
         self.invalid_dimension = Label(self, text="Dimension must be between 1 and 28 centimeters", fg="red", anchor=W)
@@ -120,7 +112,7 @@ class RefObjectBSC(Frame):
                                     lambda: self.confirm_button.grid(row=8, column=3, sticky=SE, padx=20, pady=20)))
 
         # set dimension entry placeholder
-        self.set_placeholder()
+        self.real_dimension.set_placeholder()
 
         # start in stage 1
         self.selected_object_var.set("")
@@ -185,7 +177,7 @@ class RefObjectBSC(Frame):
 
     def set_stage1(self):
         current = self.current_contour_var.get()
-        # update image title
+        # Update image title
         self.ref_object_var.set("Object #" + str(current + 1))
 
         # Update instructions
@@ -213,7 +205,7 @@ class RefObjectBSC(Frame):
         make_rows_responsive(self, ignored=[0])
 
     def set_stage2(self):
-        # Update title
+        # Update image title
         self.ref_object_var.set("Selected Reference Object")
 
         # Update instructions
@@ -237,7 +229,7 @@ class RefObjectBSC(Frame):
         make_columns_responsive(self, ignored=[0, 1])
         make_rows_responsive(self, ignored=[0, 2, 3, 4, 5, 6, 7])
 
-    def validate_float(self, action, value_if_allowed, text):
+    def validate_dimension(self, action, value_if_allowed, text):
         # only when inserting
         if (action == "1"):
             if text in "0123456789.":
@@ -261,24 +253,6 @@ class RefObjectBSC(Frame):
                 return False
         else:
             return True
-
-    def set_placeholder(self):
-        self.real_dimension_var.set("0.00")
-        self.real_dimension.configure(fg=self.placeholder_color)
-
-        # force focus out
-        self.focus()
-
-    def on_focusin_dimension_entry(self, event):
-        # clear placeholder on entry focus
-        if self.real_dimension["fg"] == self.placeholder_color:
-            self.real_dimension_var.set("")
-            self.real_dimension.configure(fg=self.default_entry_fg_color)
-
-    def on_focusout_dimension_entry(self, event):
-        # Set placeholder if entry is empty
-        if not self.real_dimension_var.get():
-            self.set_placeholder()
 
     def update_confirm_button(self, *args):
         dimension = self.real_dimension_var.get()
@@ -313,7 +287,7 @@ class RefObjectBSC(Frame):
             self.responsive_image = None
 
         # reset real dimension entry field
-        self.set_placeholder()
+        self.real_dimension.set_placeholder()
 
         # clear selected object; start in stage 1
         self.selected_object_var.set("")

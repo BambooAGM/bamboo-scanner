@@ -4,7 +4,7 @@ from tkinter import *
 from tkinter import filedialog, messagebox
 
 from backend.bpc import generate_textfile, saved_measurement, delete_measurement, sort_ByZeta
-from gui.widgets.custom import TableLeftHeaders, GreenButton, YellowButton, RedButton
+from gui.widgets.custom import TableLeftHeaders, YellowButton, RedButton
 from gui.widgets.helpers import make_columns_responsive, make_rows_responsive
 
 
@@ -26,19 +26,14 @@ class ResultsBPC(Frame):
         self.empty_message = Label(self, text="Nothing to see here. Go capture some measurements!",
                                    font=self.controller.header_font)
 
-        # Go back button
-        self.back_button = GreenButton(self, text="I'm not done yet", command=self.go_back,
-                                       image=self.controller.arrow_left, compound=LEFT)
-        self.back_button.grid(row=1, column=0, sticky=SW, padx=20, pady=20)
-
         # Save button
         self.save_button = YellowButton(self, text="SAVE", command=self.save, image=self.controller.save_icon,
                                         compound=LEFT)
-        self.save_button.grid(row=1, column=1, sticky=SE, padx=10, pady=20)
+        self.save_button.grid(row=1, column=0, sticky=SE, padx=10, pady=20)
 
         # Discard button
         self.discard_button = RedButton(self, text="DISCARD", command=self.discard)
-        self.discard_button.grid(row=1, column=2, sticky=SW, padx=10, pady=20)
+        self.discard_button.grid(row=1, column=1, sticky=SW, padx=10, pady=20)
 
         make_rows_responsive(self)
         make_columns_responsive(self)
@@ -73,7 +68,7 @@ class ResultsBPC(Frame):
             for column in range(len(self.captured_data)):
                 self.table.cells[0][column].configure(bg="#5E5E5E", fg="#FFFFFF", font=self.controller.bold_font)
             self.table.headers[0].configure(bg="#5E5E5E", fg="#FFFFFF")
-            self.table.grid(row=0, columnspan=3)
+            self.table.grid(row=0, column=0, columnspan=2)
 
             # load cells with captured measurements
             self.table.update_cells(self.captured_data)
@@ -81,7 +76,7 @@ class ResultsBPC(Frame):
         # No captured measurements
         else:
             # Show an empty message
-            self.empty_message.grid(row=0, columnspan=3)
+            self.empty_message.grid(row=0, columnspan=2)
 
             # disable save button
             self.save_button.configure(state=DISABLED, cursor="arrow")
@@ -110,9 +105,6 @@ class ResultsBPC(Frame):
         # Otherwise hide empty message
         else:
             self.empty_message.grid_forget()
-
-    def go_back(self):
-        self.controller.show_frame("MeasureBPC")
 
     def save(self):
         date = datetime.now().strftime('%Y-%m-%d_%H%M%S')

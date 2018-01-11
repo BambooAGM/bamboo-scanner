@@ -33,7 +33,7 @@ class ScrollableTextArea(Frame):
         Frame.__init__(self, parent)
 
         # Text input field
-        self.text = Text(self, wrap=WORD)
+        self.text = Text(self, wrap=WORD, height=10)
         self.text.pack(side=LEFT, fill=BOTH, expand=True)
 
         # Vertical scroll bar
@@ -119,8 +119,6 @@ class TableLeftHeaders(Frame):
                 temp_row.append(cell)
             self.cells.append(temp_row)
 
-        # make_columns_responsive(self)
-
     def update_cells(self, new_values):
         # table has only 1 column; accept single array
         if self.columns == 1 and isinstance(new_values[0], str):
@@ -173,8 +171,9 @@ class TableLeftHeaders(Frame):
 
 
 class ResponsiveImage(Frame):
-    def __init__(self, master, image, tag="IMG"):
-        Frame.__init__(self, master)
+
+    def __init__(self, parent, image, tag="IMG"):
+        Frame.__init__(self, parent)
 
         # save image
         self.original = image
@@ -212,3 +211,43 @@ class ResponsiveImage(Frame):
     #     self.image = ImageTk.PhotoImage(self.original)
     #     self.canvas.delete("IMG")
     #     self.canvas.create_image(0, 0, image=self.image, anchor=NW, tags="IMG")
+
+
+class EntryWithPlaceholder(Entry):
+
+    def __init__(self, parent, text_var, placeholder_text, placeholder_color="grey", **kwargs):
+        Entry.__init__(self, parent, **kwargs)
+
+        # Keep a reference of the parent to have someone to focus out onto
+        self.parent = parent
+        # a reference of the StringVar used for the entry's content
+        self.value_var = text_var
+        # the placeholder
+        self.placeholder_text = placeholder_text
+
+        # save the entry's text color
+        self.text_color = self["fg"]
+        # placeholder text color
+        self.placeholder_color = placeholder_color
+
+        # bind to focus in/out of entry to handle placeholder
+        self.bind("<FocusIn>", self.on_focus_in)
+        self.bind("<FocusOut>", self.on_focus_out)
+
+    def set_placeholder(self):
+        self.value_var.set(self.placeholder_text)
+        self.configure(fg=self.placeholder_color)
+
+        # force focus out
+        self.parent.focus()
+
+    def on_focus_in(self, event):
+        # clear placeholder on entry focus
+        if self["fg"] == self.placeholder_color:
+            self.value_var.set("")
+            self.configure(fg=self.text_color)
+
+    def on_focus_out(self, event):
+        # Set placeholder if entry is empty
+        if not self.value_var.get():
+            self.set_placeholder()

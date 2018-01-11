@@ -1,8 +1,10 @@
 import threading
-from serial import SerialException
-from backend.bpc import save_measurements
-from backend.sensors_manager import getInstantRawSensorData, getCleanSensorData, openArduinoSerial, closeArduinoSerial, clearCache
 
+from serial import SerialException
+
+from backend.bpc import save_measurements
+from backend.sensors_manager import getInstantRawSensorData, getCleanSensorData, openArduinoSerial, closeArduinoSerial, \
+    clearCache, calibrateAllSensors, sensorArray
 
 # Semaphore lock to guarantee only 1 thread at a time
 port_lock = threading.Semaphore()
@@ -11,6 +13,8 @@ port_lock = threading.Semaphore()
 reading_sensors = threading.Event()
 # Tells the thread to capture data; cleared when data is ready
 capture_now = threading.Event()
+# Tells the thread to calibrate sensors; cleared when done
+calibrate_now = threading.Event()
 # Signal to kill thread
 kill_thread = threading.Event()
 # Main program was closed
@@ -21,7 +25,7 @@ no_arduino = threading.Event()
 disconnected = threading.Event()
 
 
-def get_live_sensors(widget, reading_sensors, main_quit, kill_thread, no_arduino, disconnected, port_lock, capture_now):
+def get_live_sensors(widget):
     """
     Runs in a separate thread to retrieve live sensor data and display it without blocking the GUI.
 
@@ -62,6 +66,17 @@ def get_live_sensors(widget, reading_sensors, main_quit, kill_thread, no_arduino
                     save_measurements(data)
                     # clear once it has been saved
                     capture_now.clear()
+
+                elif calibrate_now.is_set():
+                    # do not use cache -- needed ???
+                    clearCache()
+
+                    # run calibration
+                    calibrateAllSensors()
+                    print(sensorArray)
+
+                    # signal calibration is done
+                    calibrate_now.clear()
 
                 # Show live feed
                 else:
