@@ -81,7 +81,7 @@ class VerticalTable(Frame):
             self.cells.append(temp_row)
 
     def update_cells(self, new_values):
-        # table has only 1 rows; accept single array
+        # table has only 1 row; accept single array
         if self.rows == 1 and isinstance(new_values[0], str):
             try:
                 for column in range(self.columns):
@@ -101,7 +101,7 @@ class VerticalTable(Frame):
 
 class HorizontalTable(Frame):
     """
-    A table with headers on the leftmost column.
+    A table with headers on the leftmost column. Data is filled column by column.
 
     :param rows: number of rows
     :param columns: number of columns (not counting the header)
@@ -125,7 +125,7 @@ class HorizontalTable(Frame):
         if self.can_select_columns:
             # Delete button
             self.is_button_disabled = True
-            self.delete_button = Button(self, text="Delete\n selected", state=DISABLED, relief=GROOVE)
+            self.delete_button = Button(self, text="Delete\nselected", state=DISABLED, relief=GROOVE)
 
             # save the original background color to restore it later
             self.disabled_background = self.delete_button.cget("background")
@@ -195,11 +195,27 @@ class HorizontalTable(Frame):
         # has many columns; use multidimensional array
         else:
             try:
-                for row in range(self.rows):
-                    for column in range(self.columns):
+                for column in range(self.columns):
+                    for row in range(self.rows):
                         self.cell_values[row][column].set(new_values[column][row])
             except IndexError:
                 print("Your data does not match the dimensions of the table.")
+
+    def clear_cells(self):
+        for column in range(self.columns):
+            for row in range(self.rows):
+                self.cell_values[row][column].set("")
+
+    def update_column(self, column, new_values):
+        try:
+            for row in range(self.rows):
+                self.cell_values[row][column].set(new_values[row])
+        except IndexError:
+            print("Your data does not match the dimensions of the table.")
+
+    def clear_column(self, column):
+        for row in range(self.rows):
+            self.cell_values[row][column].set("")
 
     def set_headers(self, values):
         for row in range(self.rows):

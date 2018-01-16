@@ -51,6 +51,7 @@ class ResultsBSC(Frame):
         # create plot
         figure = Figure(figsize=(5,5), dpi=100)
         ax = figure.add_subplot(111, projection="polar")
+        # ax.set_title("Circumferences' polar coordinates")
 
         # plot both circumferences
         for (r, theta, _) in data_circumferences:

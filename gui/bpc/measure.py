@@ -37,19 +37,12 @@ class MeasureBPC(Frame):
                                     padx=10, pady=10)
         self.status_message.grid(row=0, column=0, sticky=EW, padx=40, pady=20)
 
-        # Sensor Z
-        # self.z_value = StringVar()
-        # self.z_label = Label(self, textvariable=self.z_value, font=self.controller.important_font)
-        # self.z_label.grid(row=1, column=0, sticky=S)
-
         # Table headers
         top_headers = ["Sensor #", "Current\nreading", "Last\ncaptured\nvalue", "Last\ndeviation"]
         self.table_headers = VerticalTable(self, rows=1, columns=len(top_headers))
         self.table_headers.update_cells(top_headers)
         self.table_headers.grid(row=1, column=0, sticky=S)
 
-        # Object containing the table's data
-        self.table_data = [[], [], []]
         # column indexes
         self.live_column = 0
         self.captured_column = 1
@@ -85,21 +78,21 @@ class MeasureBPC(Frame):
         self.count_number.set(len(saved_measurement))
 
         # clear live readings from table
-        self.table_data[self.live_column].clear()
+        self.table.clear_column(self.live_column)
 
         # Controls update callback
         self.do_update = True
         # Flag to only update buttons and message when necessary
         self.busy_message_set = False
 
-        # start live GUI
-        self.update_live_gui()
         # Open port and start reading
         self.run_live_thread()
 
+        # start live GUI
+        self.update_live_gui()
+
     def run_live_thread(self):
-        self.live_thread = threading.Thread(target=get_live_sensors, name="live_sensors",
-                                            args=(self,))
+        self.live_thread = LiveFeedThread(widget=self)
         self.live_thread.start()
 
     def update_live_gui(self):
@@ -134,7 +127,7 @@ class MeasureBPC(Frame):
                 return
 
         # Capturing data
-        if capture_now.is_set():
+        if self.live_thread.capture_now.is_set():
             # only set message once
             if not self.busy_message_set:
                 # Show status message
@@ -147,21 +140,23 @@ class MeasureBPC(Frame):
                 self.busy_message_set = True
 
             # when data has been captured
-            if capture_done.is_set():
+            if self.live_thread.capture_done.is_set():
                 last_captured = saved_measurement[len(saved_measurement) - 1]
 
-                # store last captured in table data object
-                self.table_data[self.captured_column] = last_captured
-
                 # update table with new data
-                self.table.update_cells(self.table_data)
+                self.table.update_column(self.captured_column, last_captured)
 
                 # clear flags
-                capture_done.clear()
-                capture_now.clear()
+                self.live_thread.capture_now.clear()
+                self.live_thread.capture_done.clear()
+
+                # update captured count label
+                self.count_number.set(self.count_number.get() + 1)
+
+                self.update_idletasks()
 
         # Calibrating sensors
-        elif calibrate_now.is_set():
+        elif self.live_thread.calibrate_now.is_set():
             # only set message once
             if not self.busy_message_set:
                 # Show status message
@@ -174,7 +169,7 @@ class MeasureBPC(Frame):
                 self.busy_message_set = True
 
             # when calibration is done
-            if calibration_done.is_set():
+            if self.live_thread.calibration_done.is_set():
                 deviations = []
 
                 # exclude the last one; it's the ultrasonic
@@ -186,28 +181,24 @@ class MeasureBPC(Frame):
                 ultrasonic = sensorArray[len(sensorArray) - 1]
                 deviations.append(ultrasonic.factor)
 
-                # store deviations in table data object
-                self.table_data[self.deviation_column] = deviations
-
                 # update table with new data
-                self.table.update_cells(self.table_data)
+                self.table.update_column(self.deviation_column, deviations)
 
                 # clear flags
-                calibration_done.clear()
-                calibrate_now.clear()
+                self.live_thread.calibrate_now.clear()
+                self.live_thread.calibration_done.clear()
+
+                self.update_idletasks()
 
         # Update live feed
-        elif reading_sensors.is_set() and not capture_now.is_set():
+        elif self.live_thread.reading_sensors.is_set() and not self.live_thread.capture_now.is_set()\
+                and not self.live_thread.calibrate_now.is_set():
             try:
                 while True:
-                    data = self.queue.get_nowait()
-
-                    # store readings in table data object
-                    self.table_data[self.live_column] = data
+                    sensor_readings = self.queue.get_nowait()
 
                     # Update table with new sensor data
-                    self.table.update_cells(self.table_data)
-                    # self.z_value.set("Z = " + data[len(data) - 1] + " cm")
+                    self.table.update_column(self.live_column, sensor_readings)
 
                     # only set message once
                     if self.busy_message_set:
@@ -221,11 +212,12 @@ class MeasureBPC(Frame):
                         self.busy_message_set = False
 
                     self.update_idletasks()
+
             except queue.Empty:
                 pass
 
         # Sensors are still initializing
-        elif not reading_sensors.is_set() and self.do_update and not self.busy_message_set:
+        elif not self.live_thread.reading_sensors.is_set() and self.do_update and not self.busy_message_set:
             # Show loading message
             self.status_var.set("Connecting to sensors...")
 
@@ -257,25 +249,28 @@ class MeasureBPC(Frame):
         self.results_button.configure(state=DISABLED, cursor="wait")
 
     def on_leave_frame(self, event=None):
-        # stop live feed and close serial port
-        kill_thread.set()
-        reading_sensors.clear()
+        # kill thread and close serial port
+        self.live_thread.kill_thread.set()
+
         self.do_update = False
 
     def calibrate(self):
         # only one at a time
-        if not calibrate_now.is_set():
+        if not self.live_thread.calibrate_now.is_set():
+            # clear old values from table
+            self.table.clear_column(self.deviation_column)
+
             # Let the worker thread handle it
-            calibrate_now.set()
+            self.live_thread.calibrate_now.set()
 
     def capture(self):
         # only one at a time
-        if not capture_now.is_set():
-            # Let the worker thread handle it
-            capture_now.set()
+        if not self.live_thread.capture_now.is_set():
+            # clear old values from table
+            self.table.clear_column(self.captured_column)
 
-            # update captured count label
-            self.count_number.set(self.count_number.get() + 1)
+            # Let the worker thread handle it
+            self.live_thread.capture_now.set()
 
     def update_count_label(self, *args):
         self.count_str.set(str(self.count_number.get()) + " measurements captured")
@@ -286,3 +281,6 @@ class MeasureBPC(Frame):
     def reset(self):
         # reset captured count
         self.count_number.set(0)
+
+        # clear table
+        self.table.clear_cells()

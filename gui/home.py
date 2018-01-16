@@ -45,8 +45,16 @@ class Home(Frame):
 
     def open_bpc(self):
         self.controller.restore_navbar()
+
+        # reset bpc
+        self.controller.reset_BPC()
+
         self.controller.show_frame("ConfigBPC")
 
     def open_bsc(self):
         self.controller.restore_navbar()
+
+        # reset bsc
+        self.controller.reset_BSC()
+
         self.controller.show_frame("ConfigBSC")
