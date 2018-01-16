@@ -1,6 +1,6 @@
 from tkinter import *
 
-from backend.bpc import set_sampleDescription
+from backend.bpc import set_sampleDescription, set_calibration_settings
 from gui.widgets.custom import ScrollableTextArea, YellowButton, EntryWithPlaceholder
 from gui.widgets.helpers import make_columns_responsive, make_rows_responsive
 
@@ -143,10 +143,18 @@ class ConfigBPC(Frame):
             self.begin_button.configure(state=DISABLED, cursor="arrow")
 
     def begin(self):
-        text = self.text_area.text.get(1.0, END)
-        set_sampleDescription(text)
+        # save sample description
+        set_sampleDescription(self.text_area.get_text())
+
+        # save calibration settings
+        ring_diameter = float(self.ring_diameter_var.get())
+        calibration_obj = float(self.calibration_object_var.get())
+        distance_z = float(self.distance_z_var.get())
+        set_calibration_settings(ringDiameter=ring_diameter, obj_radius=calibration_obj, distance_z=distance_z)
+
+        # Show sensors live feed
         self.controller.show_frame("MeasureBPC")
 
     def reset(self):
         # reset description
-        self.text_area.text.delete(1.0, END)
+        self.text_area.clear_text()

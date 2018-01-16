@@ -2,19 +2,25 @@ import threading
 
 from serial import SerialException
 
-from backend.bpc import save_measurements
-from backend.sensors_manager import getInstantRawSensorData, getCleanSensorData, openArduinoSerial, closeArduinoSerial, \
-    clearCache, calibrateAllSensors, sensorArray
+from backend.bpc import save_measurements, ring_diameter, calibration_obj_radius, rail_z_distance
+from backend.sensors_manager import *
 
 # Semaphore lock to guarantee only 1 thread at a time
 port_lock = threading.Semaphore()
 
-# Signals we are reading
+# Signals port is open
 reading_sensors = threading.Event()
+
 # Tells the thread to capture data; cleared when data is ready
 capture_now = threading.Event()
+# Tell the gui to grab the captured data
+capture_done = threading.Event()
+
 # Tells the thread to calibrate sensors; cleared when done
 calibrate_now = threading.Event()
+# Tell the gui to grab the calibration data
+calibration_done = threading.Event()
+
 # Signal to kill thread
 kill_thread = threading.Event()
 # Main program was closed
@@ -27,16 +33,10 @@ disconnected = threading.Event()
 
 def get_live_sensors(widget):
     """
-    Runs in a separate thread to retrieve live sensor data and display it without blocking the GUI.
+    Runs in a separate thread to display live sensor data, capture measurements, and calibrate sensors
+     without blocking the GUI.
 
     :param widget: The widget whose queue we are populating (MeasureBPC Frame)
-    :param reading_sensors: signals the GUI when the port has been opened
-    :param main_quit: signals the main thread has ended, and so shall the threads
-    :param kill_thread: kill signal of thread, set when navigating away from MeasureBPC
-    :param no_arduino: event when arduino is not found
-    :param disconnected: event when not able to read from serial
-    :param port_lock: semaphore to avoid race on serial port
-    :param capture_now: event when data wants to be captured
     :return: None
     """
     # Semaphore lock to guarantee only 1 thread at a time
@@ -55,28 +55,40 @@ def get_live_sensors(widget):
         # Keep reading sensors
         while not main_quit.is_set() and not kill_thread.is_set():
             try:
-                # Data wants to be captured
+                # User wants to capture data
                 if capture_now.is_set():
                     # do not use cache
                     clearCache()
+
                     # Get sensor data
                     data = getCleanSensorData()
                     print("saving", data)
+
                     # Save data in backend
                     save_measurements(data)
-                    # clear once it has been saved
-                    capture_now.clear()
 
+                    # signal data has been captured
+                    capture_done.set()
+
+                # User wants to calibrate sensors
                 elif calibrate_now.is_set():
-                    # do not use cache -- needed ???
+                    # do not use cache
+                    clearCache()
+
+                    # init sensors
+                    initSensors(structureRadius=ring_diameter * 0.5)
+
+                    # clear cache again
                     clearCache()
 
                     # run calibration
-                    calibrateAllSensors()
+                    calibrateAllSensors(testRadius=calibration_obj_radius, testDistance=rail_z_distance)
                     print(sensorArray)
 
+                    # dev angle > 4.0
+
                     # signal calibration is done
-                    calibrate_now.clear()
+                    calibration_done.set()
 
                 # Show live feed
                 else:

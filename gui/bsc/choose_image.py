@@ -11,7 +11,7 @@ class ConfigBSC(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-        self.title = "Select an image of a bamboo slice"
+        self.title = "Select a bamboo slice image"
         self.initialize_widgets()
         self.bind("<<ShowFrame>>", self.on_show_frame)
 
@@ -25,7 +25,7 @@ class ConfigBSC(Frame):
         # responsive image container
         self.placeholder_image = Image.open("assets/placeholder_image.png")
         self.responsive_image = ResponsiveImage(self, self.placeholder_image)
-        self.responsive_image.grid(row=0, column=0, rowspan=3)
+        self.responsive_image.grid(row=0, column=0, rowspan=4)
 
         # choose image button
         self.choose_button = GreenButton(self, text="Choose an image", command=self.load_image)
@@ -35,9 +35,13 @@ class ConfigBSC(Frame):
         self.path_entry = Entry(self, textvariable=self.image_path, state="readonly")
         self.path_entry.grid(row=1, column=1, sticky=EW, padx=20)
 
+        # status message in row 2
+        self.message_var = StringVar()
+        self.message = Label(self, textvariable=self.message_var, font=self.controller.header_font)
+
         # begin button
         self.begin_button = YellowButton(self, text="BEGIN", command=self.begin, image=self.controller.arrow_right, compound=RIGHT)
-        self.begin_button.grid(row=2, column=1, sticky=SE, padx=20, pady=20)
+        self.begin_button.grid(row=3, column=1, sticky=SE, padx=20, pady=20)
 
         # Update widgets
         self.on_image_path_change()
@@ -60,71 +64,114 @@ class ConfigBSC(Frame):
 
         # ensure a file path was selected
         if len(temp_path) > 0:
-            # update image path & enable begin button
+            # disable button before processing
+            self.begin_button.configure(state=DISABLED, cursor="wait")
+
+            # Process image
+            self.circumferences_found = process_image(temp_path)
+
+            # update image path, message, and begin button
             self.image_path.set(temp_path)
 
-            # user image
-            self.image = Image.open(temp_path)
+            # image not found
+            if self.circumferences_found is None:
+                # show error message
+                messagebox.showerror("Could not process image", "The image may have been moved or renamed, or you may not have access to it.")
 
-            # make it responsive
-            self.responsive_image.destroy()
-            self.responsive_image = ResponsiveImage(self, self.image)
-            self.responsive_image.grid(row=0, column=0, rowspan=3, sticky=NSEW, pady=20)
+            else:
+                # Not a fresh session
+                if self.visit_counter > 1:
+                    # reset the BSC GUI except this frame
+                    self.controller.reset_BSC_GUI(ignored=[type(self)])
+
+                    # make this the 1st visit
+                    self.visit_counter = 1
+
+                # user image with all detected circumferences outlined
+                image = get_config_image()
+
+                # make it responsive
+                self.responsive_image.destroy()
+                self.responsive_image = ResponsiveImage(self, image)
+                self.responsive_image.grid(row=0, column=0, rowspan=4, sticky=NSEW, pady=20)
 
     def on_image_path_change(self, *args):
         # image is selected
         if self.image_path.get():
-            self.begin_button.configure(state=NORMAL, cursor="hand2")
+
+            # show image path
             self.path_entry.grid()
             self.choose_button.configure(text="Change image")
+
+            # error processing image or less than 2 found
+            if self.circumferences_found is None or self.circumferences_found < 2:
+                # disable begin button
+                self.begin_button.configure(state=DISABLED, cursor="arrow")
+
+                # make message red
+                self.message.configure(fg="red")
+
+                # error processing image
+                if self.circumferences_found is None:
+                    self.message_var.set("Error processing selected image")
+
+                    # show placeholder image
+                    self.set_placeholder_image()
+
+                # less than 2 found
+                else:
+                    self.message_var.set(str(self.circumferences_found) + " circumference(s) found.\n Choose another image.")
+
+            # at least 2 found
+            else:
+                # enable begin button
+                self.begin_button.configure(state=NORMAL, cursor="hand2")
+
+                # make message green
+                self.message.configure(fg="#35AD35")
+
+                # 2 circumferences found
+                if self.circumferences_found == 2:
+                    self.message_var.set("Bamboo slice detected!\n Step 2 will be skipped.")
+
+                # more than 2 where found
+                else:
+                    self.message_var.set(str(self.circumferences_found) + " circumferences found")
+
+            # show the message
+            self.message.grid(row=2, column=1, padx=20)
+
         # not selected
         else:
             self.begin_button.configure(state=DISABLED, cursor="arrow")
             self.path_entry.grid_remove()
             self.choose_button.configure(text="Choose an image")
 
+            # hide the message
+            self.message.grid_remove()
+
     def begin(self):
-        temp_path = self.image_path.get()
+        # Go to pick circumferences if found more than 2
+        if get_number_original_circumferences() > 2:
+            self.controller.show_frame("PickCircumferencesBSC")
 
-        # Data from previous processing
-        old_img_path = get_image_path()
-        old_num_of_boxes = get_number_boxes()
-
-        # reset backend if this is not a fresh session
-        if self.visit_counter != 1:
-            reset_bsc_backend()
-
-        # Process image
-        status = process_image(temp_path)
-
-        if status == "OK":
-            # Not a fresh session and the image has changed
-            if self.visit_counter > 1 and (temp_path != old_img_path or old_num_of_boxes != get_number_boxes()):
-                # reset the BSC GUI except this frame
-                self.controller.reset_BSC_GUI(ignored=[type(self)])
-
-                # make this the 1st visit
-                self.visit_counter = 1
-
-            # Go to results page
-            self.controller.show_frame("RefObjectBSC")
+        # Go to configure scale
         else:
-            # show error message
-            messagebox.showerror("Something's not right", status)
-            # disable begin button
-            self.image_path.set("")
+            self.controller.show_frame("RefObjectBSC")
 
     def on_show_frame(self, event=None):
         self.visit_counter += 1
 
-    def reset(self):
-        # reset to placeholder image
+    def set_placeholder_image(self):
         self.responsive_image.destroy()
         self.responsive_image = ResponsiveImage(self, self.placeholder_image)
-        self.responsive_image.grid(row=0, column=0, rowspan=3)
+        self.responsive_image.grid(row=0, column=0, rowspan=4)
 
-        # Clear image and path
-        self.image = None
+    def reset(self):
+        # reset to placeholder image
+        self.set_placeholder_image()
+
+        # Clear image path
         self.image_path.set("")
 
         # visited flag

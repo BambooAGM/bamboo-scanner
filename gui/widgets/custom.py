@@ -41,14 +41,73 @@ class ScrollableTextArea(Frame):
         self.text.configure(yscrollcommand=self.scroll.set)
         self.scroll.pack(side=RIGHT, fill=Y)
 
+    def get_text(self):
+        self.text.get(1.0, END)
 
-class TableLeftHeaders(Frame):
+    def clear_text(self):
+        self.text.delete(1.0, END)
+
+
+class VerticalTable(Frame):
+    def __init__(self, parent, **kwargs):
+        Frame.__init__(self, parent)
+
+        # read keyword arguments
+        self.rows = kwargs.pop("rows", 2)
+        self.columns = kwargs.pop("columns", 2)
+
+        if kwargs:
+            raise TypeError('Unexpected **kwargs: %r' % kwargs)
+
+        # Variable text for each content cell
+        self.cell_values = []
+        for row in range(self.rows):
+            temp_row = []
+            for column in range(self.columns):
+                temp_row.append(StringVar())
+            self.cell_values.append(temp_row)
+
+        # Make the cells of the table
+        self.cells = []
+        bold_font = font.Font(family="Segoe UI Emoji", size=13, weight="bold")
+
+        for row in range(self.rows):
+            temp_row = []
+            for column in range(self.columns):
+                cell = Label(self, textvariable=self.cell_values[row][column], borderwidth=1, width=10, relief="ridge",
+                             bg="#5E5E5E", fg="#FFFFFF", font=bold_font)
+                cell.grid(row=row, column=column, sticky=NSEW)
+                temp_row.append(cell)
+            self.cells.append(temp_row)
+
+    def update_cells(self, new_values):
+        # table has only 1 rows; accept single array
+        if self.rows == 1 and isinstance(new_values[0], str):
+            try:
+                for column in range(self.columns):
+                    self.cell_values[0][column].set(new_values[column])
+            except IndexError:
+                print("Make sure the array contains a value for each row.")
+
+        # has many columns; use multidimensional array
+        else:
+            try:
+                for row in range(self.rows):
+                    for column in range(self.columns):
+                        self.cell_values[row][column].set(new_values[row][column])
+            except IndexError:
+                print("Your data does not match the dimensions of the table.")
+
+
+class HorizontalTable(Frame):
     """
     A table with headers on the leftmost column.
 
     :param rows: number of rows
     :param columns: number of columns (not counting the header)
     :param header_values: the text of the headers
+    :param can_select_columns: shows checkboxes on top of table for each column, and an action button
+    :param button_command: Action button's command
     """
     def __init__(self, parent, **kwargs):
         Frame.__init__(self, parent)
@@ -59,6 +118,7 @@ class TableLeftHeaders(Frame):
         self.header_values = kwargs.pop("header_values", None)
         self.can_select_columns = kwargs.pop("can_select_columns", False)
         self.button_command = kwargs.pop("button_command", None)
+
         if kwargs:
             raise TypeError('Unexpected **kwargs: %r' % kwargs)
 
@@ -66,8 +126,10 @@ class TableLeftHeaders(Frame):
             # Delete button
             self.is_button_disabled = True
             self.delete_button = Button(self, text="Delete\n selected", state=DISABLED, relief=GROOVE)
+
             # save the original background color to restore it later
             self.disabled_background = self.delete_button.cget("background")
+
             # optional button callback
             if self.button_command:
                 self.delete_button.configure(command=self.button_command)
@@ -101,9 +163,11 @@ class TableLeftHeaders(Frame):
         bold_font = font.Font(family="Segoe UI Emoji", size=13, weight="bold")
         for row in range(self.rows):
             header = Label(self, borderwidth=1, width=10, relief="ridge", bg="#C9C9C9", fg="#000000", font=bold_font)
+
             # add text value if provided
             if self.header_values:
                 header.configure(text=self.header_values[row])
+
             # offset by one row since delete checkboxes are there
             header.grid(row=row + 1, column=0, sticky=NSEW)
             self.headers.append(header)
@@ -127,6 +191,7 @@ class TableLeftHeaders(Frame):
                     self.cell_values[row][0].set(new_values[row])
             except IndexError:
                 print("Make sure the array contains a value for each row.")
+
         # has many columns; use multidimensional array
         else:
             try:
@@ -145,6 +210,7 @@ class TableLeftHeaders(Frame):
         if self.is_button_disabled:
             self.is_button_disabled = False
             self.delete_button.configure(state=NORMAL, bg="#FF3300", fg="#FFFFFF", cursor="hand2")
+
         # look for a selected checkbox; if non found, disable button
         else:
             for column in range(self.columns):

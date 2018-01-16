@@ -4,7 +4,7 @@ from tkinter import *
 from tkinter import filedialog, messagebox
 
 from backend.bpc import generate_textfile, saved_measurement, delete_measurement, sort_ByZeta
-from gui.widgets.custom import TableLeftHeaders, YellowButton, RedButton
+from gui.widgets.custom import HorizontalTable, YellowButton, RedButton
 from gui.widgets.helpers import make_columns_responsive, make_rows_responsive
 
 
@@ -27,7 +27,7 @@ class ResultsBPC(Frame):
                                    font=self.controller.header_font)
 
         # Save button
-        self.save_button = YellowButton(self, text="SAVE", command=self.save, image=self.controller.save_icon,
+        self.save_button = YellowButton(self, text="Save coordinates", command=self.save, image=self.controller.save_icon,
                                         compound=LEFT)
         self.save_button.grid(row=1, column=0, sticky=SE, padx=10, pady=20)
 
@@ -62,8 +62,9 @@ class ResultsBPC(Frame):
             for column in self.captured_data:
                 column.insert(0, column.pop())
 
-            self.table = TableLeftHeaders(self, rows=len(self.captured_data[0]), columns=len(self.captured_data),
-                                          header_values=self.sensor_headers, can_select_columns=True, button_command=self.delete_z)
+            self.table = HorizontalTable(self, rows=len(self.captured_data[0]), columns=len(self.captured_data),
+                                         header_values=self.sensor_headers, can_select_columns=True,
+                                         button_command=self.delete_z)
             # Set background of top row
             for column in range(len(self.captured_data)):
                 self.table.cells[0][column].configure(bg="#5E5E5E", fg="#FFFFFF", font=self.controller.bold_font)

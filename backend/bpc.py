@@ -5,141 +5,39 @@ import numpy as np
 from backend.utils import get_timestamp
 
 sample_description = ""
-textDescTest = " This is a test for BPC text file generation. \n"
-'''finalArray = [[3.4, 10.49, 1.69, 10.06, 6.33, 6.48, 3.43, 12.94, 5.76, 5.54, 10.36, 4.82, 1.55],
-              [10.98, 4.09, 0.3, 6.26, 14.32, 0.99, 8.79, 5.39, 11.73, 3.48, 11.78, 5.74, 11.13],
-              [4.92, 7.13, 9.08, 12.37, 10.36, 7.36, 5.91, 7.53, 13.27, 10.57, 0.6, 0.33, 4.13],
-              [13.58, 6.61, 7.9, 11.72, 6.14, 11.15, 9.16, 2.68, 4.79, 0.6, 0.97, 9.56, 0.19],
-              [13.25, 1.94, 6.91, 0.29, 11.78, 6.53, 5.08, 7.86, 3.69, 10.08, 8.24, 0.07, 3.77],
-              [5.45, 6.12, 2.56, 13.7, 10.48, 7.52, 14.51, 7.44, 9.12, 0.27, 14.8, 0.47, 8.53],
-              [4.43, 6.27, 13.77, 11.04, 8.2, 4.44, 12.55, 1.44, 10.42, 9.3, 2.63, 12.15, 8.21],
-              [11.8, 11.63, 12.81, 3.86, 13.33, 3.2, 4.4, 13.36, 5.76, 3.27, 1.14, 7.37, 14.72],
-              [13.3, 7.19, 4.74, 9.89, 10.34, 8.28, 0.36, 14.1, 13.4, 7.98, 0.22, 11.41, 2.96],
-              [7.41, 2.1, 2.11, 14.79, 4.28, 5.25, 10.35, 5.75, 10.12, 12.11, 6.28, 2.78, 11.73],
-              [11.49, 2.84, 5.57, 2.34, 13.16, 4.69, 4.52, 9.4, 11.27, 1.03, 14.35, 3.49, 7.93],
-              [1.01, 4.66, 11.51, 3.96, 10.17, 4.27, 4.44, 8.51, 1.9, 3.78, 0.77, 11.7, 8.6],
-              [5.18, 4.42, 6.69, 7.63, 14.05, 6.28, 9.68, 6.71, 12.51, 12.73, 4.78, 13.57, 13.8]]
-
-finalArray_Aprox_RealData = [[10.4, 10.49, 9.69, 8.06, 7.33, 11.48, 7.43, 14.94, 10.00, 8.92, 10.36, 4.82, 1.55],
-                             [10.98, 4.09, 0.3, 6.26, 14.32, 0.99, 8.79, 5.39, 11.73, 3.48, 11.78, 5.74, 11.13],
-                             [4.92, 7.13, 9.08, 12.37, 10.36, 7.36, 5.91, 7.53, 13.27, 10.57, 0.6, 0.33, 4.13],
-                             [13.58, 6.61, 7.9, 11.72, 6.14, 11.15, 9.16, 2.68, 4.79, 0.6, 0.97, 9.56, 0.19],
-                             [13.25, 1.94, 6.91, 0.29, 11.78, 6.53, 5.08, 7.86, 3.69, 10.08, 8.24, 0.07, 3.77],
-                             [5.45, 6.12, 2.56, 13.7, 10.48, 7.52, 14.51, 7.44, 9.12, 0.27, 14.8, 0.47, 8.53],
-                             [4.43, 6.27, 13.77, 11.04, 8.2, 4.44, 12.55, 1.44, 10.42, 9.3, 2.63, 12.15, 8.21],
-                             [11.8, 11.63, 12.81, 3.86, 13.33, 3.2, 4.4, 13.36, 5.76, 3.27, 1.14, 7.37, 14.72],
-                             [13.3, 7.19, 4.74, 9.89, 10.34, 8.28, 0.36, 14.1, 13.4, 7.98, 0.22, 11.41, 2.96],
-                             [7.41, 2.1, 2.11, 14.79, 4.28, 5.25, 10.35, 5.75, 10.12, 12.11, 6.28, 2.78, 11.73],
-                             [11.49, 2.84, 5.57, 2.34, 13.16, 4.69, 4.52, 9.4, 11.27, 1.03, 14.35, 3.49, 7.93],
-                             [1.01, 4.66, 11.51, 3.96, 10.17, 4.27, 4.44, 8.51, 1.9, 3.78, 0.77, 11.7, 8.6],
-                             [5.18, 4.42, 6.69, 7.63, 14.05, 6.28, 9.68, 6.71, 12.51, 12.73, 4.78, 13.57, 13.8]]
-
-test3 = [[6.44, 6.60, 5.97, 12],
-         [6.46, 6.62, 6.61, 12],
-         [6.36, 6.57, 6.56, 12],
-         [5.56, 6.51, 6.54, 12],
-         [6.41, 5.13, 6.44, 12],
-         [6.44, 6.54, 5.16, 12],
-         [6.46, 6.60, 6.59, 12],
-         [6.43, 6.59, 6.59, 12],
-         [6.33, 6.62, 6.62, 12],
-         [5.79, 6.60, 6.64, 12],
-         [5.11, 6.44, 6.54, 12],
-         [6.46, 6.74, 6.72, 12],
-         [6.44, 6.84, 5.35, 12],
-         [6.44, 7.13, 7.02, 12],
-         [6.44, 7.22, 7.22, 12],
-         [6.28, 7.14, 7.16, 12],
-         [6.46, 6.52, 7.24, 12],
-         [6.46, 7.18, 5.67, 12],
-         [6.44, 7.00, 6.98, 12],
-         [6.30, 6.96, 6.98, 12],
-         [4.69, 6.60, 6.74, 12],
-         [6.46, 6.54, 6.76, 12],
-         [6.44, 6.93, 6.84, 12],
-         [6.41, 7.24, 7.24, 12],
-         [5.68, 6.27, 7.04, 12],
-         [6.41, 6.27, 6.97, 12],
-         [6.33, 6.91, 7.04, 12],
-         [5.26, 5.68, 6.54, 12],
-         [5.71, 6.56, 6.57, 12],
-         [5.68, 6.64, 6.67, 12]]
-'''
 saved_measurement = []
 finalArray2 = []
-number_of_samples = 9
 sensor_qty = 4
-radius_of_ring = 15
+
+# calibration settings
+ring_diameter = 0.0
+calibration_obj_radius = 0.0
+rail_z_distance = 0.0
 
 
-# Test for three sensors in prototype
-'''def clean_test(array):
-    test_clean = array
-    result = 0
-    result_array = []
-    for i in range(0, len(test_clean)):
-        for j in range(0, len(test_clean[i]) - 1):
-            test_clean[i][j] = round(7.5 - test_clean[i][j], 2)
-            result = test_clean[i][j] - 7.5
-            result_array.append(result)
-    return test_clean
-'''
+def set_calibration_settings(ringDiameter, obj_radius, distance_z):
+    global ring_diameter, calibration_obj_radius, rail_z_distance
 
-# Creates a dummy array of array with random data from sensors, The they are
-# rounded to the second decimal point. Also, we are subtracting the radius of the ring to the
-# measurements because it gives us the measurement from the center to the sensor.
-'''def fill_dummy():
-    global finalArray
-    for i in range(0, number_of_samples):
-        finalArray.append([])
-    for i in range(0, len(finalArray)):
-        for j in range(0, sensor_qty - 1):
-            number = radius_of_ring - random.uniform(0.0, 15.0)
-            number = round(number, 2)
-            finalArray[i].append(number)
-        finalArray[i].append(round(random.uniform(15.24, 645), 2))
-    print("UNSORTED ARRAY")
-    print(finalArray)
-    return finalArray
-'''
+    ring_diameter = ringDiameter
+    calibration_obj_radius = obj_radius
+    rail_z_distance = distance_z
+
 
 # Resets all global variables in case of a discard or return home
 def reset_bpc_backend():
-    global textDesc, saved_measurement, sortedArray, finalArray
-    textDesc = ""
+    global sample_description, saved_measurement, sortedArray, finalArray
+    sample_description = ""
     saved_measurement.clear()
     # finalArray.clear()
     # sortedArray.clear()
 
 
 # Sample Description, user input
-def set_sampleDescription(sample_description):
-    global textDesc
-    textDesc = sample_description
-    return textDesc
+def set_sampleDescription(description):
+    global sample_description
 
-'''
-def capture_measurement():
-    result_array  = getcleandata()
-    save_measurent.append(result_array)
-    return result_array
-'''
-# Checks for a sensor that's not reading and returns a list of damaged ones.
-# If the sensors are not damaged, they passed the diagnostic
-'''def sensors_diagnostic(array):
-    if not array:
-        print("Array must not be empty")
-    sensors_check = array
-    damaged_sensors = []
-    for i in range(0, len(sensors_check) - 1):
-        for j in range(0, sensor_qty - 1):
-            if sensors_check[i][j] < 0 or sensors_check[i][j] > 16:
-                damaged_sensors.append(i)
-    if not damaged_sensors:
-        return "DIAGNOSTIC PASSED"
-    else:
-        return damaged_sensors
-'''
+    sample_description = description
+
 
 def save_measurements(array):
     global saved_measurement
@@ -278,11 +176,12 @@ def rect_to_polar(xy_array, center):
 # Then proceeds to call previous funcions for generating the zeta, polar coordinates, average diameter and centroide
 # of the object being measured.
 def generate_textfile(array):
+    # TODO update this
     if not array:
         print("XY Array must not be empty ")
     array = sort_ByZeta(array)
     f = open("Samples.txt", "w+")
-    f.write(set_sampleDescription(textDescTest))
+    f.write(sample_description)
     f.write(get_timestamp())
     f.write("Samples take %s \n" % (len(array)))
     f.write(" ")
@@ -297,50 +196,3 @@ def generate_textfile(array):
         f.write("  Centroide del objeto [ %s , %s ] " % (center[0], center[1]))
         f.write("\n ")
     return
-
-
-# #finalArray = fill_dummy()
-# print(finalArray)
-# delete_measurement(2, finalArray)
-# print(finalArray)
-# # average_diameter(0, test)
-# # print("TEST TO CLEAN")
-# # print(test3)
-# # test_limpio = clean_test(test3)
-# # print(test_limpio)
-#
-# # finalArray = fill_dummy()
-# # average_diameter().demo(-1, finalArray)
-# # finalArray = fill_dummy()
-# # print("RANDOM DUMMY DATA")
-# # print(finalArray)
-#
-# # print("DO SENSOR DIAGNOSTIC")
-# # diagnose = sensors_diagnostic(finalArray)
-# # print(diagnose)
-#
-# # delete_measurement(2, finalArray)
-# # print("DELETE MEASUREMENT TEST")
-# # print(finalArray)
-# # for i in range(0, len(test_limpio)):
-# # test = calculate_xy(i, sort_ByZeta(test_limpio))
-# # avg = average_diameter(i, sort_ByZeta(test_limpio))
-# # print("AVERAGE DIAMETER TEST")
-# # print(avg)
-# # print("TEST XY COORDINATES RESPECT TO RING ")
-# # print(test)
-#
-# # print("TEST 1")
-# # print(test)
-# # print(finalArray)
-# polar = rect_to_polar(calculate_xy(0, sort_ByZeta(finalArray)), centroide_object(0, sort_ByZeta(finalArray)))
-# print("TEST 2")
-# # print(polar)
-#
-# # centroi = centroide_object(0, sort_ByZeta(finalArray))
-# # print("TEST 3")
-# # print(centroi)
-# print(finalArray)
-# # Functions
-# #final = getCleanSensorData()
-# generate_textfile(finalArray)

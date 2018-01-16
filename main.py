@@ -5,7 +5,7 @@ from PIL import ImageTk, Image
 
 from backend.bpc import reset_bpc_backend
 from backend.bpc_threading import main_quit
-from backend.bsc import reset_bsc_backend
+from backend.bsc import reset_bsc_backend, get_number_original_circumferences
 from gui.bpc.configuration import ConfigBPC
 from gui.bpc.measure import MeasureBPC
 from gui.bpc.results import ResultsBPC
@@ -93,7 +93,7 @@ class BambooScanner(Tk):
         self.bamboo.grid(row=1, column=0, sticky=NW)
 
         # The class names for both BSC and BPC
-        self.bsc_pages = (ConfigBSC, RefObjectBSC, PickCircumferencesBSC, ResultsBSC)
+        self.bsc_pages = (ConfigBSC, PickCircumferencesBSC, RefObjectBSC, ResultsBSC)
         self.bpc_pages = (ConfigBPC, MeasureBPC, ResultsBPC)
 
         # Initialize all pages and keep their references accessible
@@ -138,7 +138,12 @@ class BambooScanner(Tk):
                 else:
                     # name of previous frame
                     page_name = self.bsc_pages[i-1].__name__
-                    self.show_frame(page_name)
+
+                    # Don't go back to pick circumferences if only 2 where detected
+                    if page_name == "PickCircumferencesBSC" and get_number_original_circumferences() <= 2:
+                        self.show_frame("ConfigBSC")
+                    else:
+                        self.show_frame(page_name)
                 return
 
     def go_home(self, event=None):

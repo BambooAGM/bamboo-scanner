@@ -10,9 +10,10 @@ class RefObjectBSC(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-        self.title = "Configure Scale"
+        self.title = "Configure the image's scale"
         self.responsive_image = None
         self.boxes = []
+        self.box = None
         self.stage1_widgets = []
         self.stage2_widgets = []
         self.initialize_widgets()
@@ -42,6 +43,9 @@ class RefObjectBSC(Frame):
         self.ref_object_var = StringVar()
         self.ref_object_title = Label(self, textvariable=self.ref_object_var, font=self.controller.header_font)
         self.ref_object_title.grid(row=0, column=0, sticky=W, padx=20, pady=20)
+
+        # Min size of object title column
+        self.grid_columnconfigure(0, minsize=150)
 
         # STAGE 1
 
@@ -76,6 +80,9 @@ class RefObjectBSC(Frame):
                                          command=lambda: self.selected_object_var.set(""))
         self.stage2_widgets.append((self.change_button,
                                     lambda: self.change_button.grid(row=0, column=1, columnspan=2, sticky=SE, pady=20)))
+        # min size of change button column
+        self.grid_columnconfigure(1, minsize=100)
+
 
         # select dimension to enter for the reference object
         self.dimension_label = Label(self, text="Select dimension", font=self.controller.header_font, anchor=SW)
@@ -136,18 +143,19 @@ class RefObjectBSC(Frame):
         self.update_image()
 
     def update_image(self, *args):
-        image = self.box[self.dimension_type.get()][0]
+        if self.box is not None:
+            image = self.box[self.dimension_type.get()][0]
 
-        if self.responsive_image is not None:
-            self.responsive_image.destroy()
-        self.responsive_image = ResponsiveImage(self, image)
+            if self.responsive_image is not None:
+                self.responsive_image.destroy()
+            self.responsive_image = ResponsiveImage(self, image)
 
-        # stage 2
-        if self.selected_object_var.get():
-            self.responsive_image.grid(row=1, column=0, rowspan=8, columnspan=3, sticky=NSEW, pady=20)
-        # stage 1
-        else:
-            self.responsive_image.grid(row=1, column=0, rowspan=2, columnspan=3, sticky=NSEW, pady=20)
+            # stage 2
+            if self.selected_object_var.get():
+                self.responsive_image.grid(row=1, column=0, rowspan=8, columnspan=3, sticky=NSEW, pady=20)
+            # stage 1
+            else:
+                self.responsive_image.grid(row=1, column=0, rowspan=2, columnspan=3, sticky=NSEW, pady=20)
 
     def update_navigation(self, *args):
         current = self.current_contour_var.get()
@@ -272,12 +280,8 @@ class RefObjectBSC(Frame):
         ppm = self.box[self.dimension_type.get()][1] / float(self.real_dimension.get())
         set_pixels_per_metric(ppm)
 
-        if get_number_circumferences() > 2:
-            # More than 2 circumferences; must handpick
-            self.controller.show_frame("PickCircumferencesBSC")
-        else:
-            # Show results
-            self.controller.show_frame("ResultsBSC")
+        # Show results
+        self.controller.show_frame("ResultsBSC")
 
     def reset(self):
         # destroy the image container
@@ -289,11 +293,15 @@ class RefObjectBSC(Frame):
         # reset real dimension entry field
         self.real_dimension.set_placeholder()
 
+        # Default to width
+        self.dimension_type.set("horizontal")
+
         # clear selected object; start in stage 1
         self.selected_object_var.set("")
 
         # clear ref objects
         self.boxes.clear()
+        self.box = None
 
         # Start showing 1st contour box
         self.current_contour_var.set(0)

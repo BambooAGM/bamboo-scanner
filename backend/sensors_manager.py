@@ -276,14 +276,14 @@ def PointsInCircum(r, n):
     return [(math.cos(2 * math.pi / n * x) * r, math.sin(2 * math.pi / n * x) * r) for x in range(0, n + 1)]
 
 
-def initSensors():
+def initSensors(structureRadius):
     global sensorArray
 
     numberOfSensors = len(getStructuredSensorData())
     # numberOfSensors = 12 #TEMPORAL TWEAK
     # print(numberOfSensors)
 
-    points = PointsInCircum(12.7, numberOfSensors - 1)
+    points = PointsInCircum(structureRadius, numberOfSensors - 1)
     # print(points)
 
     for i in range(0, numberOfSensors - 1):
