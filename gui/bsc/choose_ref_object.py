@@ -39,13 +39,16 @@ class RefObjectBSC(Frame):
         self.real_dimension_var = StringVar()
         self.real_dimension_var.trace("w", self.update_confirm_button)
 
+        # Min size of object title column
+        self.grid_columnconfigure(0, minsize=150)
+
+        # Min size of change button column
+        self.grid_columnconfigure(1, minsize=100)
+
         # title of ref object image
         self.ref_object_var = StringVar()
         self.ref_object_title = Label(self, textvariable=self.ref_object_var, font=self.controller.header_font)
         self.ref_object_title.grid(row=0, column=0, sticky=W, padx=20, pady=20)
-
-        # Min size of object title column
-        self.grid_columnconfigure(0, minsize=150)
 
         # STAGE 1
 
@@ -80,9 +83,6 @@ class RefObjectBSC(Frame):
                                          command=lambda: self.selected_object_var.set(""))
         self.stage2_widgets.append((self.change_button,
                                     lambda: self.change_button.grid(row=0, column=1, columnspan=2, sticky=SE, pady=20)))
-        # min size of change button column
-        self.grid_columnconfigure(1, minsize=100)
-
 
         # select dimension to enter for the reference object
         self.dimension_label = Label(self, text="Select dimension", font=self.controller.header_font, anchor=SW)
@@ -189,8 +189,8 @@ class RefObjectBSC(Frame):
         self.ref_object_var.set("Object #" + str(current + 1))
 
         # Update instructions
-        self.instructions_var.set("The reference object should be a figure for which its width or height is known.\n"
-                                  "This will allow the program to calculate the real dimensions of the bamboo slice.")
+        self.instructions_var.set("Choose an object for which you know its width or height.\n"
+                                  "This will allow to calculate the real dimensions of the bamboo slice.")
 
         # Hide stage 2
         for (widget, grid_command) in self.stage2_widgets:

@@ -254,13 +254,15 @@ class HorizontalTable(Frame):
 
 class ResponsiveImage(Frame):
 
-    def __init__(self, parent, image, tag="IMG"):
+    def __init__(self, parent, image, tag="IMG", anchor=N):
         Frame.__init__(self, parent)
 
         # save image
         self.original = image
         # image tag
         self.tag = tag
+        # image anchor position
+        self.anchor = anchor
 
         # make frame responsive
         self.columnconfigure(0, weight=1)
@@ -286,7 +288,11 @@ class ResponsiveImage(Frame):
         self.canvas.delete(self.tag)
 
         # place image top-centered in the canvas
-        self.canvas.create_image(event.width/2, 0, image=self.image, anchor=N, tags=self.tag)
+        if self.anchor == N:
+            self.canvas.create_image(event.width/2, 0, image=self.image, anchor=N, tags=self.tag)
+        # only NW for now
+        else:
+            self.canvas.create_image(0, 0, image=self.image, anchor=NW, tags=self.tag)
 
     # def change_image(self, image):
     #     self.original = image

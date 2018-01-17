@@ -14,6 +14,7 @@ from gui.bsc.choose_ref_object import RefObjectBSC
 from gui.bsc.pick_circumferences import PickCircumferencesBSC
 from gui.bsc.results import ResultsBSC
 from gui.home import Home
+from gui.widgets.custom import ResponsiveImage
 from gui.widgets.helpers import make_rows_responsive, make_columns_responsive, resize_keep_aspect
 
 
@@ -83,14 +84,13 @@ class BambooScanner(Tk):
                                bg="#35AD35", fg="#FFFFFF")
         self.page_step.grid(row=0, column=3, sticky=E, padx=10)
 
-        # make navbar responsive
+        # only the page title is responsive
         make_columns_responsive(self.navbar, ignored=[0, 1, 3])
 
-        # Bamboo
-        bamboo_image = ImageTk.PhotoImage(Image.open("assets/bamboo.png"))
-        self.bamboo = Label(self.container, image=bamboo_image)
-        self.bamboo.image = bamboo_image
-        self.bamboo.grid(row=1, column=0, sticky=NW)
+        # Bamboo decor on left side of screen
+        bamboo_image = Image.open("assets/bamboo.png")
+        self.bamboo = ResponsiveImage(self.container, bamboo_image, tag="bamboo", anchor=NW)
+        self.bamboo.grid(row=1, column=0, sticky=NSEW)
 
         # The class names for both BSC and BPC
         self.bsc_pages = (ConfigBSC, PickCircumferencesBSC, RefObjectBSC, ResultsBSC)
@@ -106,9 +106,9 @@ class BambooScanner(Tk):
             # Add all frames to the container, on top of each other
             frame.grid(row=1, column=1, sticky=NSEW)
 
-        # Allow the grid to expand with the window
+        # make the window responsive, except the navbar row
         make_rows_responsive(self.container, ignored=[0])
-        make_columns_responsive(self.container, ignored=[0])
+        make_columns_responsive(self.container)
 
         # Start on the home page
         self.active_frame = None

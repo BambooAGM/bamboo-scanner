@@ -2,7 +2,7 @@ import threading
 
 from serial import SerialException
 
-from backend.bpc import save_measurements, ring_diameter, calibration_obj_radius, rail_z_distance
+from backend.bpc import save_measurements, get_calibration_settings
 from backend.sensors_manager import *
 
 # Semaphore lock to guarantee only 1 thread at a time
@@ -85,6 +85,9 @@ class LiveFeedThread(threading.Thread):
                         elif self.calibrate_now.is_set() and not self.calibration_done.is_set():
                             # do not use cache
                             clearCache()
+
+                            # fetch calibration settings
+                            ring_diameter, calibration_obj_radius, rail_z_distance = get_calibration_settings()
 
                             # init sensors
                             initSensors(structureRadius=ring_diameter * 0.5)

@@ -8,7 +8,7 @@ import serial.tools.list_ports
 
 sensorArray = []
 
-numberOfSamples = 5
+numberOfSamples = 10
 cacheStructuredSensorData = []
 usingCache = False
 
@@ -102,9 +102,9 @@ def getStructuredSensorData():
                 finalArray[j].append(float(splittedLine[j]))
 
         # Cache data is now the data just collected
-        cacheStructuredSensorData = finalArray
+        # cacheStructuredSensorData = finalArray
         # Forces to use cache unless cache is cleared by invoking clearCache()
-        usingCache = True
+        # usingCache = True
 
         return finalArray
 
@@ -364,7 +364,7 @@ def distToPointAllIRSensors():
 
     measurements = getCleanSensorData()
 
-    for i in range(0, len(sensorArray)):
+    for i in range(0, len(sensorArray) - 1):
         resultCoordinates.append(distToPointSingleIRSensor(sensorArray[i], measurements[i]))
 
     return resultCoordinates
