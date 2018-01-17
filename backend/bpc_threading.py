@@ -65,9 +65,6 @@ class LiveFeedThread(threading.Thread):
                     try:
                         # User wants to capture data
                         if self.capture_now.is_set() and not self.capture_done.is_set():
-                            # do not use cache
-                            clearCache()
-
                             # Get sensor data
                             data = getCleanSensorData()
 
@@ -83,20 +80,14 @@ class LiveFeedThread(threading.Thread):
 
                         # User wants to calibrate sensors
                         elif self.calibrate_now.is_set() and not self.calibration_done.is_set():
-                            # do not use cache
-                            clearCache()
-
                             # fetch calibration settings
-                            ring_diameter, calibration_obj_radius, rail_z_distance = get_calibration_settings()
+                            ring_diameter, calibration_obj_diameter, rail_z_distance = get_calibration_settings()
 
                             # init sensors
                             initSensors(structureRadius=ring_diameter * 0.5)
 
-                            # clear cache again
-                            clearCache()
-
                             # run calibration
-                            calibrateAllSensors(testRadius=calibration_obj_radius, testDistance=rail_z_distance)
+                            calibrateAllSensors(testRadius=calibration_obj_diameter * 0.5, testDistance=rail_z_distance)
                             print(sensorArray)
 
                             # don't give the signal if the user has already left the tool

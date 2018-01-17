@@ -33,7 +33,7 @@ class ScrollableTextArea(Frame):
         Frame.__init__(self, parent)
 
         # Text input field
-        self.text = Text(self, wrap=WORD, height=10)
+        self.text = Text(self, wrap=WORD, height=5)
         self.text.pack(side=LEFT, fill=BOTH, expand=True)
 
         # Vertical scroll bar

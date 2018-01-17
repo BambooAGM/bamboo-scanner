@@ -8,7 +8,7 @@ import serial.tools.list_ports
 
 sensorArray = []
 
-numberOfSamples = 10
+numberOfSamples = 5
 cacheStructuredSensorData = []
 usingCache = False
 
@@ -110,9 +110,8 @@ def getStructuredSensorData():
 
 
 # Gets the Mean from each sensor data. Returns an array of floats.
-def getMeanSensorData():
+def getMeanSensorData(data):
     try:
-        data = getStructuredSensorData()
         resultArray = []
 
         for i in range(0, len(data)):
@@ -127,9 +126,8 @@ def getMeanSensorData():
 
 
 # Gets the Standard Deviation from each sensor data. Returns an array of floats.
-def getStdevSensorData():
+def getStdevSensorData(data):
     try:
-        data = getStructuredSensorData()
         resultArray = []
 
         for i in range(0, len(data)):
@@ -148,8 +146,8 @@ def getStdevSensorData():
 def getCleanSensorData():
     finalArray = []
     structuredData = getStructuredSensorData()
-    meanData = getMeanSensorData()
-    stdevData = getStdevSensorData()
+    meanData = getMeanSensorData(structuredData)
+    stdevData = getStdevSensorData(structuredData)
 
     # print(structuredData)
     # print(meanData)

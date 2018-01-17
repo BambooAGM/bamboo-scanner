@@ -11,30 +11,30 @@ sensor_qty = 4
 
 # calibration settings
 ring_diameter = 0.0
-calibration_obj_radius = 0.0
+calibration_obj_diameter = 0.0
 rail_z_distance = 0.0
 
 
 def get_calibration_settings():
-    return ring_diameter, calibration_obj_radius, rail_z_distance
+    return ring_diameter, calibration_obj_diameter, rail_z_distance
 
 
-def set_calibration_settings(ringDiameter, obj_radius, distance_z):
-    global ring_diameter, calibration_obj_radius, rail_z_distance
+def set_calibration_settings(ringDiameter, obj_diameter, distance_z):
+    global ring_diameter, calibration_obj_diameter, rail_z_distance
 
     ring_diameter = ringDiameter
-    calibration_obj_radius = obj_radius
+    calibration_obj_diameter = obj_diameter
     rail_z_distance = distance_z
 
 
 # Resets all global variables in case of a discard or return home
 def reset_bpc_backend():
-    global sample_description, saved_measurement, sortedArray, finalArray, ring_diameter, calibration_obj_radius, rail_z_distance
+    global sample_description, saved_measurement, sortedArray, finalArray, ring_diameter, calibration_obj_diameter, rail_z_distance
     sample_description = ""
     saved_measurement.clear()
 
     ring_diameter = 0.0
-    calibration_obj_radius = 0.0
+    calibration_obj_diameter = 0.0
     rail_z_distance = 0.0
     # finalArray.clear()
     # sortedArray.clear()
