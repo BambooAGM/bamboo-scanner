@@ -4,7 +4,7 @@ from tkinter import *
 from tkinter import filedialog, messagebox
 
 from backend.bpc import generate_textfile, saved_measurement, delete_measurement, sort_ByZeta
-from gui.widgets.custom import HorizontalTable, YellowButton, RedButton
+from gui.widgets.custom import HorizontalTable, YellowButton, RedButton, AutoScrollbar
 from gui.widgets.helpers import make_columns_responsive, make_rows_responsive
 
 
@@ -13,7 +13,7 @@ class ResultsBPC(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-        self.title="Review Your Measurements"
+        self.title="Review saved measurements"
         self.captured_data = []
         # TODO Generate headers ?
         self.sensor_headers = ["Z (cm)", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11", "S12"]
@@ -22,6 +22,16 @@ class ResultsBPC(Frame):
         self.bind("<<LeaveFrame>>", self.on_leave_frame)
 
     def initialize_widgets(self):
+        # a canvas with scrollbars; the results table goes in it
+        h_scrollbar = AutoScrollbar(self, orient=HORIZONTAL)
+        h_scrollbar.grid(row=1, column=0, columnspan=2, sticky=EW)
+        v_scrollbar = AutoScrollbar(self)
+        v_scrollbar.grid(row=0, column=2, sticky=NS)
+
+        self.canvas = Canvas(self, xscrollcommand=h_scrollbar.set, yscrollcommand=v_scrollbar.set)
+        h_scrollbar.config(command=self.canvas.xview)
+        v_scrollbar.config(command=self.canvas.yview)
+
         # Empty message
         self.empty_message = Label(self, text="Nothing to see here. Go capture some measurements!",
                                    font=self.controller.header_font)
@@ -29,25 +39,25 @@ class ResultsBPC(Frame):
         # Save button
         self.save_button = YellowButton(self, text="Save coordinates", command=self.save, image=self.controller.save_icon,
                                         compound=LEFT)
-        self.save_button.grid(row=1, column=0, sticky=SE, padx=10, pady=20)
+        self.save_button.grid(row=2, column=0, sticky=S, pady=20)
 
         # Discard button
         self.discard_button = RedButton(self, text="DISCARD", command=self.discard)
-        self.discard_button.grid(row=1, column=1, sticky=SW, padx=10, pady=20)
+        self.discard_button.grid(row=2, column=1, sticky=S, pady=20)
 
-        make_rows_responsive(self)
-        make_columns_responsive(self)
+        # responsive except the scrollbars and the buttons
+        make_rows_responsive(self, ignored=[1, 2])
+        make_columns_responsive(self, ignored=[2])
 
     def on_show_frame(self, event=None):
+        # restore canvas in grid
+        self.canvas.grid(row=0, column=0, sticky=NSEW, columnspan=2, pady=20)
+
         # Enable save button
         self.save_button.configure(state=NORMAL, cursor="hand2")
 
-        print("original", saved_measurement)
-
         # sort captured measurements by Z value
         sort_ByZeta(saved_measurement)
-
-        print("sorted", saved_measurement)
 
         # Generate captured measurements table
         self.create_table()
@@ -62,20 +72,32 @@ class ResultsBPC(Frame):
             for column in self.captured_data:
                 column.insert(0, column.pop())
 
-            self.table = HorizontalTable(self, rows=len(self.captured_data[0]), columns=len(self.captured_data),
+            # the results table
+            self.table = HorizontalTable(self.canvas, rows=len(self.captured_data[0]), columns=len(self.captured_data),
                                          header_values=self.sensor_headers, can_select_columns=True,
                                          button_command=self.delete_z)
             # Set background of top row
             for column in range(len(self.captured_data)):
                 self.table.cells[0][column].configure(bg="#5E5E5E", fg="#FFFFFF", font=self.controller.bold_font)
             self.table.headers[0].configure(bg="#5E5E5E", fg="#FFFFFF")
-            self.table.grid(row=0, column=0, columnspan=2)
 
             # load cells with captured measurements
             self.table.update_cells(self.captured_data)
 
+            # place the table inside the canvas
+            self.canvas.create_window(0, 0, anchor=NW, window=self.table)
+
+            # wait for the canvas to create table
+            self.table.update_idletasks()
+
+            # update scroll region of table
+            self.canvas.config(scrollregion=self.canvas.bbox("all"))
+
         # No captured measurements
         else:
+            # Hide canvas
+            self.canvas.grid_forget()
+
             # Show an empty message
             self.empty_message.grid(row=0, columnspan=2)
 
@@ -83,8 +105,9 @@ class ResultsBPC(Frame):
             self.save_button.configure(state=DISABLED, cursor="arrow")
 
     def destroy_table(self):
-        # Remove checkboxes and table from grid, and destroy them
-        self.table.grid_forget()
+        # Remove table from canvas
+        self.canvas.delete("all")
+        # Destroy the table
         self.table.destroy()
 
     def delete_z(self):
@@ -101,8 +124,8 @@ class ResultsBPC(Frame):
     def on_leave_frame(self, event=None):
         # Destroy table if there are any captured measurements
         if saved_measurement:
-            # Destroy captured measurements table
             self.destroy_table()
+
         # Otherwise hide empty message
         else:
             self.empty_message.grid_forget()

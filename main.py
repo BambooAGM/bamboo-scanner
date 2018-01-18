@@ -68,7 +68,7 @@ class BambooScanner(Tk):
         self.home_button.bind("<Leave>", self.on_leave_home_btn)
 
         # Back button
-        self.back_button = Button(self.navbar, image=self.arrow_left, cursor="hand2", text="Go back", compound=LEFT,
+        self.back_button = Button(self.navbar, image=self.arrow_left, cursor="hand2", text="Back", compound=LEFT,
                                   command=self.go_back, bg="#35AD35", fg="#FFFFFF", relief=GROOVE, padx=10)
         self.back_button.grid(row=0, column=1, sticky=NSEW)
 
