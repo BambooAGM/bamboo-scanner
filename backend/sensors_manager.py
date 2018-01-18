@@ -280,19 +280,25 @@ def PointsInCircum(r, n):
     return [(math.cos(2 * math.pi / n * x) * r, math.sin(2 * math.pi / n * x) * r) for x in range(0, n + 1)]
 
 
-def initSensors(structureRadius):
+def initSensors(structureRadius=11.5):
     global sensorArray
 
+    # clear sensor array
+    sensorArray.clear()
+
     numberOfSensors = len(getStructuredSensorData())
-    # numberOfSensors = 12 #TEMPORAL TWEAK
+    # numberOfSensors = 13 #TEMPORAL TWEAK
     # print(numberOfSensors)
 
-    points = PointsInCircum(structureRadius, numberOfSensors - 1)
-    # print(points)
+    angle = 360
+    decrement = 360 / (numberOfSensors - 1)
 
     for i in range(0, numberOfSensors - 1):
-        point = points[i]
-        sensorArray.append(IRSensor(point[0], point[1]))
+        print(angle)
+        x = structureRadius * (math.cos(math.radians(angle)))
+        y = structureRadius * (math.sin(math.radians(angle)))
+        angle = angle - decrement
+        sensorArray.append(IRSensor(x, y))
 
     sensorArray.append(UltSensor())
 
@@ -313,15 +319,12 @@ def calibrateSingleIRSensor(s, distanceMeasured, testRadius):
             closestPoint = p
             r = tempDistance
 
-    # print(closestPoint)
     s.xf = closestPoint[0]
     s.yf = closestPoint[1]
-    print(closestPoint)
     s.r = r
 
     deviation = threePointAngle((s.xi, s.yi), closestPoint, (0, 0))  # HACER TEST
     s.devAngle = round(deviation, 2)
-    # print(deviation)
 
     return s
 
