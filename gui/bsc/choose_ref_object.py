@@ -217,7 +217,7 @@ class RefObjectBSC(Frame):
         self.ref_object_var.set("Selected Reference Object")
 
         # Update instructions
-        self.instructions_var.set("Now please tell us how long is the dimension given by the pink line in the image.\n"
+        self.instructions_var.set("Now enter the dimension given by the pink line in the image.\n"
                                   "Provide the most decimals for more accurate results!")
 
         # Hide stage 1

@@ -13,7 +13,7 @@ class MeasureBPC(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-        self.title = "Live Sensor Readings (cm)"
+        self.title = "Measure the bamboo pole"
         self.initialize_widgets()
         self.bind("<<ShowFrame>>", self.on_show_frame)
         self.bind("<<LeaveFrame>>", self.on_leave_frame)
@@ -23,6 +23,10 @@ class MeasureBPC(Frame):
 
     def add_to_queue(self, data):
         self.queue.put(data)
+
+    def clear_queue(self):
+        with self.queue.mutex:
+            self.queue.queue.clear()
 
     def initialize_widgets(self):
         # Watchers
@@ -38,7 +42,7 @@ class MeasureBPC(Frame):
         self.status_message.grid(row=0, column=0, sticky=EW, padx=40, pady=20)
 
         # Table headers
-        top_headers = ["Sensor #", "Current\nreading", "Last\ncaptured\nvalue", "Last\ndeviation"]
+        top_headers = ["Sensor #", "Live\nreading (cm)", "Last\ncaptured\nvalue (cm)", "Last\ndeviation"]
         self.table_headers = VerticalTable(self, rows=1, columns=len(top_headers))
         self.table_headers.update_cells(top_headers)
         self.table_headers.grid(row=1, column=0, sticky=S)
@@ -77,9 +81,6 @@ class MeasureBPC(Frame):
         # TODO get count from function
         self.count_number.set(len(saved_measurement))
 
-        # clear live readings from table
-        self.table.clear_column(self.live_column)
-
         # Controls update callback
         self.do_update = True
         # Flag to only update buttons and message when necessary
@@ -100,7 +101,7 @@ class MeasureBPC(Frame):
         if no_arduino.is_set():
             no_arduino.clear()
 
-            result = messagebox.askretrycancel("Error opening serial port",
+            result = messagebox.askretrycancel("The Arduino is not connected",
                                                "Make sure the Arduino is properly connected, and try again.",
                                                icon="error")
             # Retry
@@ -115,8 +116,8 @@ class MeasureBPC(Frame):
         if disconnected.is_set():
             disconnected.clear()
 
-            result = messagebox.askretrycancel("Error reading from Arduino",
-                                               "Make sure the Arduino is properly connected, and try again.",
+            result = messagebox.askretrycancel("The Arduino has been disconnected",
+                                               "Reconnect the Arduino and try again.",
                                                icon="error")
             # Retry
             if result:
@@ -141,7 +142,7 @@ class MeasureBPC(Frame):
 
             # when data has been captured
             if self.live_thread.capture_done.is_set():
-                last_captured = saved_measurement[len(saved_measurement) - 1]
+                last_captured = saved_measurement[-1]
 
                 # update table with new data
                 self.table.update_column(self.captured_column, last_captured)
@@ -175,11 +176,11 @@ class MeasureBPC(Frame):
                 # exclude the last one; it's the ultrasonic
                 for i in range(len(sensorArray) - 1):
                     # IR sensor deviation angle
-                    deviations.append(sensorArray[i].devAngle)
+                    deviations.append(str(sensorArray[i].devAngle) + '°')
 
-                # ultrasonic sensor
-                ultrasonic = sensorArray[len(sensorArray) - 1]
-                deviations.append(ultrasonic.factor)
+                # ultrasonic sensor is the last element of sensorArray
+                ultrasonic_factor = round(sensorArray[-1].factor, 2)
+                deviations.append(ultrasonic_factor)
 
                 # update table with new data
                 self.table.update_column(self.deviation_column, deviations)
@@ -223,6 +224,9 @@ class MeasureBPC(Frame):
 
             # Disable buttons
             self.disable_buttons()
+
+            # clear previous live readings from table
+            self.table.clear_column(self.live_column)
 
             # message has been set
             self.busy_message_set = True

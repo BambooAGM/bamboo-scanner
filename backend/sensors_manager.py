@@ -12,7 +12,7 @@ numberOfSamples = 5
 cacheStructuredSensorData = []
 usingCache = False
 
-arduinoSerial = serial.Serial()
+arduinoSerial = None
 isPortOpen = False
 
 
@@ -32,8 +32,7 @@ def clearCache():
     print("Cache Cleared")
 
 
-# Returns a line of raw data from Arduino. closeArduinoSerial() must be invoked
-# after this function.
+# Returns a line of raw data from Arduino.
 def getInstantRawSensorData():
     global arduinoSerial, isPortOpen
 
@@ -233,6 +232,13 @@ def closeArduinoSerial():
     isPortOpen = False
 
 
+def hardResetArduinoSerial():
+    global arduinoSerial, isPortOpen
+
+    arduinoSerial = None
+    isPortOpen = False
+
+
 ###########################################################
 ## CALIBRATION
 ###########################################################
@@ -246,7 +252,7 @@ def threePointAngle(vertexp1, p2, p3):
     p13 = twoPointDistance(vertexp1, p3)
     p23 = twoPointDistance(p2, p3)
 
-    result = math.acos((pow(p12, 2.0) + pow(p13, 2.0) - pow(p23, 2)) / (2.0 * p12 * p13)) * (180.0 / math.pi)
+    result = math.acos(round((pow(p12, 2.0) + pow(p13, 2.0) - pow(p23, 2)) / (2.0 * p12 * p13), 10)) * (180.0 / math.pi)
     # print(result)
     return result
 
@@ -314,7 +320,7 @@ def calibrateSingleIRSensor(s, distanceMeasured, testRadius):
     s.r = r
 
     deviation = threePointAngle((s.xi, s.yi), closestPoint, (0, 0))  # HACER TEST
-
+    s.devAngle = round(deviation, 2)
     # print(deviation)
 
     return s

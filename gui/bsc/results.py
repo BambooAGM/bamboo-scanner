@@ -48,29 +48,36 @@ class ResultsBSC(Frame):
         # generate polar coordinates and avg diameter of circumferences
         data_circumferences = circumferences_to_polar_and_avg_diameter()
 
+        final_circumferences = translate_coordinates()
+
         # create plot
         figure = Figure(figsize=(5,5), dpi=100)
-        ax = figure.add_subplot(111, projection="polar")
-        # ax.set_title("Circumferences' polar coordinates")
+        ax = figure.add_subplot(111)
+        # ax.set_title("Circumferences")
 
-        # plot both circumferences
-        for (r, theta, _) in data_circumferences:
-            ax.plot(theta, r)
+        # colors of plot series (outer = red, inner = blue)
+        colors = ("r", "b")
+
+        for ((contour_x, contour_y), (centroid_x, centroid_y)), color in zip(final_circumferences, colors):
+            # plot the contours
+            ax.plot(contour_x, contour_y, color=color)
+            # plot the centroids
+            ax.plot(centroid_x, centroid_y, color=color, marker="o")
 
         # Create a Tk canvas of the plot
-        self.polar_plot = FigureCanvasTkAgg(figure, self)
-        self.polar_plot.show()
-        self.polar_plot.get_tk_widget().grid(row=1, column=1, sticky=NSEW, padx=20)
+        self.plot = FigureCanvasTkAgg(figure, self)
+        self.plot.show()
+        self.plot.get_tk_widget().grid(row=1, column=1, sticky=NSEW, padx=20)
 
         # Show some controls for the figure
         self.toolbar_container = Frame(self)
-        self.plot_toolbar = NavigationToolbar(self.polar_plot, self.toolbar_container)
+        self.plot_toolbar = NavigationToolbar2TkAgg(self.plot, self.toolbar_container)
         self.plot_toolbar.update()
         self.toolbar_container.grid(row=0, column=1, sticky=NSEW, padx=20, pady=20)
 
         # original image with both circumferences outlined
         self.image = get_slice_roi()
-        self.responsive_image = ResponsiveImage(self, self.image)
+        self.responsive_image = ResponsiveImage(self, self.image, anchor=CENTER)
         self.responsive_image.grid(row=1, column=0, sticky=NSEW, padx=20, pady=20)
 
     def save(self):
@@ -105,9 +112,4 @@ class ResultsBSC(Frame):
             self.image = None
 
         # destroy the plot
-        self.polar_plot = None
-
-
-class NavigationToolbar(NavigationToolbar2TkAgg):
-    # Remove the zoom-to-rectangle button; not for polar plots
-    toolitems = [t for t in NavigationToolbar2TkAgg.toolitems if t[0] != "Zoom"]
+        self.plot = None

@@ -35,8 +35,8 @@ class ConfigBPC(Frame):
         validate_cmd = (self.register(self.validate_calibration_settings), '%d', '%P', '%S', '%W')
 
         # Calibration settings group
-        self.calibration_settings = LabelFrame(self, text="Calibration Settings", fg="grey", padx=20, pady=20,
-                                               font=self.controller.header_font)
+        self.calibration_settings = LabelFrame(self, text="Calibration Settings (all measures in centimeters)",
+                                               fg="grey", padx=20, pady=20, font=self.controller.header_font)
         self.calibration_settings.grid(row=0, column=0, sticky=NSEW, padx=20, pady=20)
 
         # Ring diameter
@@ -77,7 +77,7 @@ class ConfigBPC(Frame):
 
         # Invalid calibration object diameter
         self.invalid_calibration_obj_diameter = Label(self.calibration_settings,
-                                                      text="The calibration object's diameter\nshould be between 8 and 28 centimeters",
+                                                      text="The calibration object's diameter\nshould be between 2 and 28 centimeters",
                                                       fg="red", anchor=NW, justify=LEFT)
 
         # calibration object diameter greater than ring diameter
@@ -146,7 +146,7 @@ class ConfigBPC(Frame):
 
                     # calibration object    
                     elif widget_name == "calibration_obj":
-                        # valid range [8,28]
+                        # valid range [2,28]
                         if float(value_if_allowed) >= 1.0 and float(value_if_allowed) <= 28.0:
                             # remove invalid message
                             self.invalid_calibration_obj_diameter.grid_forget()
@@ -188,8 +188,8 @@ class ConfigBPC(Frame):
 
         # valid range [10,30]
         ring_diameter_ok = ring_diameter and float(ring_diameter) >= 10.0
-        # valid range [8,28]
-        calibration_object_ok = calibration_obj and float(calibration_obj) >= 8.0
+        # valid range [2,28]
+        calibration_object_ok = calibration_obj and float(calibration_obj) >= 2.0
         # valid range [15.24, 645]
         distance_z_ok = distance_z and float(distance_z) >= 15.24
 

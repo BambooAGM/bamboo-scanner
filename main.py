@@ -279,6 +279,8 @@ if __name__ == "__main__":
 
     # start GUI
     app = BambooScanner()
+    # start maximized
+    app.state("zoomed")
     # window title
     app.title("Bamboo Scanner")
     # Program exit handler

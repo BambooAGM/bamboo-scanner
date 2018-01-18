@@ -6,6 +6,19 @@ from PIL import ImageTk
 from gui.widgets.helpers import resize_keep_aspect
 
 
+class AutoScrollbar(Scrollbar):
+    # a scrollbar that hides itself if it's not needed.
+    # only works if you use the grid geometry manager.
+    def set(self, lo, hi):
+        if float(lo) <= 0.0 and float(hi) >= 1.0:
+            # grid_remove is currently missing from Tkinter!
+            # self.tk.call("grid", "remove", self)
+            self.grid_remove()
+        else:
+            self.grid()
+        Scrollbar.set(self, lo, hi)
+
+
 class YellowButton(Button):
 
     def __init__(self, parent, **kwargs):
@@ -96,7 +109,7 @@ class VerticalTable(Frame):
                     for column in range(self.columns):
                         self.cell_values[row][column].set(new_values[row][column])
             except IndexError:
-                print("Your data does not match the dimensions of the table.")
+                print("The new data does not match the dimensions of the table.")
 
 
 class HorizontalTable(Frame):
@@ -199,7 +212,7 @@ class HorizontalTable(Frame):
                     for row in range(self.rows):
                         self.cell_values[row][column].set(new_values[column][row])
             except IndexError:
-                print("Your data does not match the dimensions of the table.")
+                print("The new data does not match the dimensions of the table.")
 
     def clear_cells(self):
         for column in range(self.columns):
@@ -211,7 +224,7 @@ class HorizontalTable(Frame):
             for row in range(self.rows):
                 self.cell_values[row][column].set(new_values[row])
         except IndexError:
-            print("Your data does not match the dimensions of the table.")
+            print("The new data does not match the dimensions of the table.")
 
     def clear_column(self, column):
         for row in range(self.rows):
@@ -290,6 +303,8 @@ class ResponsiveImage(Frame):
         # place image top-centered in the canvas
         if self.anchor == N:
             self.canvas.create_image(event.width/2, 0, image=self.image, anchor=N, tags=self.tag)
+        elif self.anchor == CENTER:
+            self.canvas.create_image(event.width / 2, event.height / 2, image=self.image, anchor=CENTER, tags=self.tag)
         # only NW for now
         else:
             self.canvas.create_image(0, 0, image=self.image, anchor=NW, tags=self.tag)

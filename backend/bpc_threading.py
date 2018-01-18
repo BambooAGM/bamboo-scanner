@@ -88,7 +88,6 @@ class LiveFeedThread(threading.Thread):
 
                             # run calibration
                             calibrateAllSensors(testRadius=calibration_obj_diameter * 0.5, testDistance=rail_z_distance)
-                            print(sensorArray)
 
                             # don't give the signal if the user has already left the tool
                             if not main_quit.is_set() and not self.kill_thread.is_set():
@@ -103,6 +102,13 @@ class LiveFeedThread(threading.Thread):
 
                     except SerialException:
                         disconnected.set()
+
+                        # reset sensor manager
+                        hardResetArduinoSerial()
+
+                        # clear live feed queue
+                        self.widget.clear_queue()
+
                         print("arduino disconnected")
                         return
 
