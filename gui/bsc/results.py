@@ -20,7 +20,7 @@ class ResultsBSC(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-        self.title = "Slice Results"
+        self.title = "Slice processing results"
         self.responsive_image = None
         self.initialize_widgets()
         self.bind("<<ShowFrame>>", self.on_show_frame)

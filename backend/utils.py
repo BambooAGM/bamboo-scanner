@@ -1,12 +1,14 @@
 import math
 import time
 
-import numpy as np
-
 
 def midpoint(pt_a, pt_b):
     # (x1 + x2) / 2 , (y1 + y2) / 2
     return (pt_a[0] + pt_b[0]) * 0.5, (pt_a[1] + pt_b[1]) * 0.5
+
+
+def twoPointDistance(p1, p2):
+    return math.sqrt(pow(p1[0] - p2[0], 2) + pow(p1[1] - p2[1], 2))
 
 
 def rect_to_polar(point, center, inverted_y=False):
@@ -19,7 +21,7 @@ def rect_to_polar(point, center, inverted_y=False):
     if inverted_y:
         y_total = y_total * -1.0
 
-    r = math.sqrt(float(np.square(x_total)) + float(np.square(y_total)))
+    r = twoPointDistance(point, center)
     theta = math.atan2(y_total, x_total)
 
     return (r, theta)

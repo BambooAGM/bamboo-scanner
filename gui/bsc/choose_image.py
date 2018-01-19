@@ -132,11 +132,11 @@ class ConfigBSC(Frame):
 
                 # 2 circumferences found
                 if self.circumferences_found == 2:
-                    self.message_var.set("Bamboo slice detected!\n Step 2 will be skipped.")
+                    self.message_var.set("Bamboo slice detected!\n No need to choose circumferences.")
 
                 # more than 2 where found
                 else:
-                    self.message_var.set(str(self.circumferences_found) + " circumferences found")
+                    self.message_var.set(str(self.circumferences_found) + " circumferences found.\n You must choose two of them.")
 
             # show the message
             self.message.grid(row=2, column=1, padx=20)

@@ -53,12 +53,12 @@ class RefObjectBSC(Frame):
         # STAGE 1
 
         # Controls to navigate contours
-        self.prev_button = GreenButton(self, text="Previous", image=self.controller.arrow_left, compound=LEFT,
+        self.prev_button = GreenButton(self, text="Previous\nobject", image=self.controller.arrow_left, compound=LEFT,
                                        command=lambda: self.show_contour(self.current_contour_var.get() - 1))
         self.stage1_widgets.append((self.prev_button,
                                     lambda: self.prev_button.grid(row=0, column=1, sticky=SE, padx=5, pady=20)))
 
-        self.next_button = GreenButton(self, text="Next", image=self.controller.arrow_right, compound=RIGHT,
+        self.next_button = GreenButton(self, text="Next\nobject", image=self.controller.arrow_right, compound=RIGHT,
                                        command=lambda: self.show_contour(self.current_contour_var.get() + 1))
         self.stage1_widgets.append((self.next_button,
                                     lambda: self.next_button.grid(row=0, column=2, sticky=SW, pady=20)))
@@ -68,7 +68,7 @@ class RefObjectBSC(Frame):
         # instructions
         self.instructions_var = StringVar()
         self.instructions = Label(self, textvariable=self.instructions_var, relief=GROOVE, padx=10, pady=10)
-        self.instructions.grid(row=1, column=3, padx=40)
+        self.instructions.grid(row=1, column=3, padx=30)
 
         # select reference object
         self.select_button = YellowButton(self, text="Use this object as reference",
@@ -79,7 +79,7 @@ class RefObjectBSC(Frame):
         # STAGE 2
 
         # Change reference object
-        self.change_button = GreenButton(self, text="Change",
+        self.change_button = GreenButton(self, text="Change object",
                                          command=lambda: self.selected_object_var.set(""))
         self.stage2_widgets.append((self.change_button,
                                     lambda: self.change_button.grid(row=0, column=1, columnspan=2, sticky=SE, pady=20)))
@@ -97,7 +97,8 @@ class RefObjectBSC(Frame):
                                     lambda: self.dimension_height.grid(row=4, column=3, sticky=NSEW, padx=60)))
 
         # user-entered dimension (for pixels-per-metric)
-        self.real_dimension_label = Label(self, text="True measure of pink line (in centimeters)", font=self.controller.header_font, anchor=SW)
+        self.real_dimension_label = Label(self, text="Real measure of the red line (in centimeters)",
+                                          font=self.controller.header_font, anchor=SW)
         self.stage2_widgets.append((self.real_dimension_label,
                                     lambda: self.real_dimension_label.grid(row=5, column=3, padx=40, pady=20, sticky=NSEW)))
 
@@ -160,7 +161,7 @@ class RefObjectBSC(Frame):
     def update_navigation(self, *args):
         current = self.current_contour_var.get()
         # update image title
-        self.ref_object_var.set("Object #" + str(current + 1))
+        self.ref_object_var.set("Object\n" + str(current + 1) + " of " + str(len(self.boxes)))
 
         # toggle prev
         if current == 0:
@@ -217,8 +218,8 @@ class RefObjectBSC(Frame):
         self.ref_object_var.set("Selected Reference Object")
 
         # Update instructions
-        self.instructions_var.set("Now enter the dimension given by the pink line in the image.\n"
-                                  "Provide the most decimals for more accurate results!")
+        self.instructions_var.set("Enter the real measure of the red line in the image.\n"
+                                  "Provide decimals for more accurate results!")
 
         # Hide stage 1
         for (widget, grid_command) in self.stage1_widgets:

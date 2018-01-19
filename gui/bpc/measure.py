@@ -58,7 +58,7 @@ class MeasureBPC(Frame):
         self.table.grid(row=2, column=0, rowspan=2, sticky=N)
 
         # calibrate button
-        self.calibrate_button = GreenButton(self, text="Calibrate Sensors", command=self.calibrate)
+        self.calibrate_button = GreenButton(self, text="Calibrate sensors", command=self.calibrate)
         self.calibrate_button.grid(row=0, column=1, pady=20)
 
         # captured count
@@ -66,11 +66,11 @@ class MeasureBPC(Frame):
         self.captured_count.grid(row=2, column=1, sticky=S, pady=10)
 
         # capture button
-        self.capture_button = YellowButton(self, text="Capture Measurements", command=self.capture)
+        self.capture_button = YellowButton(self, text="Capture measurements", command=self.capture)
         self.capture_button.grid(row=3, column=1, sticky=N)
 
         # view results button
-        self.results_button = GreenButton(self, text="View Results", command=self.view_results,
+        self.results_button = GreenButton(self, text="View results", command=self.view_results,
                                           image=self.controller.arrow_right, compound=RIGHT)
         self.results_button.grid(row=4, column=1, sticky=SE, padx=20, pady=20)
 

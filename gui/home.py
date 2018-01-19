@@ -1,3 +1,5 @@
+import os
+import webbrowser
 from tkinter import *
 from tkinter import font
 
@@ -20,22 +22,32 @@ class Home(Frame):
         self.logo.image = logo_image
         self.logo.grid(row=0, columnspan=2, sticky=S)
 
+        # select a tool label
+        self.select_label = Label(self, text="Select a tool:", font=self.controller.important_font, fg="grey")
+        self.select_label.grid(row=1, column=0, columnspan=2, sticky=S)
+
         # Buttons font
         buttons_font = font.Font(family="Segoe UI Emoji", size=26)
 
         # BPC
         self.bpc_button = GreenButton(self, text="Pole", command=self.open_bpc, font=buttons_font)
-        self.bpc_button.grid(row=1, column=0, sticky=S)
+        self.bpc_button.grid(row=2, column=0, sticky=S)
 
         self.bpc_description = Label(self, fg="#333333", text="Measure the external surface\n of a bamboo pole")
-        self.bpc_description.grid(row=2, column=0, rowspan=2, sticky=N)
+        self.bpc_description.grid(row=3, column=0, rowspan=2, sticky=N)
 
         # BSC
         self.bsc_button = GreenButton(self, text="Slice", command=self.open_bsc, font=buttons_font)
-        self.bsc_button.grid(row=1, column=1, sticky=S)
+        self.bsc_button.grid(row=2, column=1, sticky=S)
 
-        self.bsc_description = Label(self, fg="#333333", text="Measure the inner and outer\n circumferences of a\n bamboo cross section")
-        self.bsc_description.grid(row=2, column=1, rowspan=3, sticky=N)
+        self.bsc_description = Label(self, fg="#333333",
+                                     text="Measure the inner and outer\n circumferences of a\n bamboo cross section")
+        self.bsc_description.grid(row=3, column=1, rowspan=3, sticky=N)
+
+        # guide link
+        self.guide_button = Button(self, text="First time? Open tutorial", relief=FLAT, command=self.open_guide,
+                                   fg="blue", font=self.controller.underlined_font)
+        self.guide_button.grid(row=4, columnspan=2)
 
         make_rows_responsive(self)
         make_columns_responsive(self)
@@ -58,3 +70,10 @@ class Home(Frame):
         self.controller.reset_BSC()
 
         self.controller.show_frame("ConfigBSC")
+
+    def open_guide(self):
+        my_path = os.path.dirname(__file__)
+        # path to pdf file
+        path = os.path.join(my_path, "../assets/HOWTO.pdf")
+        # open it
+        webbrowser.open_new(path)

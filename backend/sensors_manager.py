@@ -6,9 +6,11 @@ import warnings
 import serial
 import serial.tools.list_ports
 
+from backend.utils import twoPointDistance
+
 sensorArray = []
 
-numberOfSamples = 5
+numberOfSamples = 10
 cacheStructuredSensorData = []
 usingCache = False
 
@@ -243,17 +245,13 @@ def hardResetArduinoSerial():
 ## CALIBRATION
 ###########################################################
 
-def twoPointDistance(p1, p2):
-    return math.sqrt(pow(p1[0] - p2[0], 2) + pow(p1[1] - p2[1], 2))
-
-
 def threePointAngle(vertexp1, p2, p3):
     p12 = twoPointDistance(vertexp1, p2)
     p13 = twoPointDistance(vertexp1, p3)
     p23 = twoPointDistance(p2, p3)
 
-    result = math.acos(round((pow(p12, 2.0) + pow(p13, 2.0) - pow(p23, 2)) / (2.0 * p12 * p13), 10)) * (180.0 / math.pi)
-    # print(result)
+    result = math.degrees(math.acos(round((pow(p12, 2.0) + pow(p13, 2.0) - pow(p23, 2.0)) / (2.0 * p12 * p13), 10)))
+    print(result)
     return result
 
 
@@ -264,7 +262,7 @@ class IRSensor(object):
         self.yi = yi
         self.xf = 0.0
         self.yf = 0.0
-        self.r = 0.0  # CAMABIAR A 0
+        self.r = 0.0  # CAMBIAR A 0
         self.isCalibrated = False
         self.repeatMeasurement = False
         self.devAngle = 0
@@ -277,7 +275,7 @@ class UltSensor(object):
 
 
 def PointsInCircum(r, n):
-    return [(math.cos(2 * math.pi / n * x) * r, math.sin(2 * math.pi / n * x) * r) for x in range(0, n + 1)]
+    return [(math.cos(2.0 * math.pi / n * x) * r, math.sin(2.0 * math.pi / n * x) * r) for x in range(0, n + 1)]
 
 
 def initSensors(structureRadius=11.5):
@@ -294,24 +292,22 @@ def initSensors(structureRadius=11.5):
     decrement = 360 / (numberOfSensors - 1)
 
     for i in range(0, numberOfSensors - 1):
-        print(angle)
-        x = structureRadius * (math.cos(math.radians(angle)))
-        y = structureRadius * (math.sin(math.radians(angle)))
+        # print(angle)
+        x = round(structureRadius * (math.cos(math.radians(angle))), 2)
+        y = round(structureRadius * (math.sin(math.radians(angle))), 2)
         angle = angle - decrement
         sensorArray.append(IRSensor(x, y))
 
     sensorArray.append(UltSensor())
 
 
-def calibrateSingleIRSensor(s, distanceMeasured, testRadius):
+def calibrateSingleIRSensor(s, distanceMeasured, testPoints):
     closestDiff = 999999
     closestPoint = (0, 0)
     r = 0.0
 
-    testPoints = PointsInCircum(testRadius, 10000)
-
     for p in testPoints:
-        tempDistance = math.sqrt(pow((p[0] - s.xi), 2) + pow((p[1] - s.yi), 2))
+        tempDistance = math.sqrt(pow((p[0] - s.xi), 2.0) + pow((p[1] - s.yi), 2.0))
         tempDiff = math.fabs(tempDistance - distanceMeasured)
 
         if (tempDiff < closestDiff):
@@ -323,16 +319,20 @@ def calibrateSingleIRSensor(s, distanceMeasured, testRadius):
     s.yf = closestPoint[1]
     s.r = r
 
-    deviation = threePointAngle((s.xi, s.yi), closestPoint, (0, 0))  # HACER TEST
+    deviation = threePointAngle((s.xi, s.yi), closestPoint, (0.0, 0.0))  # HACER TEST
     s.devAngle = round(deviation, 2)
 
     return s
 
 
 def calibrateSingleUltSensor(s, distanceMeasured, testDistance):
-    s.factor = testDistance / distanceMeasured
+    try:
+        s.factor = testDistance / distanceMeasured
 
-    return s
+        return s
+
+    except ZeroDivisionError:
+        print("The ultrasonic sensor is not reading correctly. Verify it's properly connected.")
 
 
 def calibrateAllSensors(testRadius=1.58, testDistance=10):
@@ -341,14 +341,16 @@ def calibrateAllSensors(testRadius=1.58, testDistance=10):
     if (len(sensorArray) == 0):
         initSensors()
 
+    testPoints = PointsInCircum(testRadius, 1000)
+
     measuredDistances = getCleanSensorData()
-    arraySize = len(sensorArray)
 
-    for i in range(0, arraySize - 1):
-        sensorArray[i] = calibrateSingleIRSensor(sensorArray[i], measuredDistances[i], testRadius)
+    # calibrate IR sensors
+    for i in range(0, len(sensorArray) - 1):
+        sensorArray[i] = calibrateSingleIRSensor(sensorArray[i], measuredDistances[i], testPoints)
 
-    sensorArray[arraySize - 1] = calibrateSingleUltSensor(sensorArray[arraySize - 1], measuredDistances[arraySize - 1],
-                                                          testDistance)
+    # calibrate ultrasonic sensor
+    sensorArray[-1] = calibrateSingleUltSensor(sensorArray[-1], measuredDistances[-1], testDistance)
 
 
 ###############################################################
@@ -358,7 +360,7 @@ def distToPointSingleIRSensor(s, distanceMeasured):
     if (t < 0 or distanceMeasured > 16):  # 16cm is the radius of the structure
         s.repeatReading = True
 
-    newCoordinate = (round(((1.0 - t) * s.xi) + (t * s.xf), 3), round(((1.0 - t) * s.yi) + (t * s.yf), 3))
+    newCoordinate = (((1.0 - t) * s.xi) + (t * s.xf), ((1.0 - t) * s.yi) + (t * s.yf))
     return newCoordinate
 
 

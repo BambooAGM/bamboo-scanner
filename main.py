@@ -28,10 +28,12 @@ class BambooScanner(Tk):
         # Global fonts
         self.global_font_family = font.Font(family="Segoe UI Emoji")
         self.common_font = font.Font(family="Segoe UI Emoji", size=14)
+        self.small_font = font.Font(family="Segoe UI Emoji", size=12)
         self.bold_font = font.Font(family="Segoe UI Emoji", size=13, weight="bold")
+        self.underlined_font = font.Font(family="Segoe UI Emoji", size=14, weight="bold", underline=True)
         self.header_font = font.Font(family="Segoe UI Emoji", size=16, weight="bold")
+        self.important_font = font.Font(family="Segoe UI Emoji", size=20, weight="bold")
         self.title_font = font.Font(family="Segoe UI Emoji", size=28, weight="bold")
-        self.important_font = font.Font(family="Segoe UI Emoji", size=28, weight="bold", underline=True)
 
         # update widget fonts
         self.option_add("*Font", self.global_font_family)
@@ -147,7 +149,7 @@ class BambooScanner(Tk):
                 return
 
     def go_home(self, event=None):
-        result = messagebox.askokcancel("Go Home?", "If you leave now, all unsaved progress will be lost.",
+        result = messagebox.askokcancel("Return to Home screen?", "If you leave now, all unsaved progress will be lost.",
                                         default="cancel", icon="warning")
 
         if result:

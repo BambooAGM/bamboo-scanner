@@ -5,9 +5,8 @@ import cv2
 import numpy as np
 from PIL import Image
 from imutils import perspective
-from scipy.spatial import distance as dist
 
-from backend.utils import rect_to_polar, get_timestamp, midpoint
+from backend.utils import rect_to_polar, get_timestamp, midpoint, twoPointDistance
 
 __image_path = None
 __original_image = None
@@ -220,22 +219,22 @@ def render_boxes():
         cv2.circle(orig_horizontal_line, (int(tr_br_x), int(tr_br_y)), 5, (255, 0, 0), -1)
 
         # draw lines between the midpoints
-        cv2.line(orig_vertical_line, (int(tl_tr_x), int(tl_tr_y)), (int(bl_br_x), int(bl_br_y)), (255, 0, 255), thickness=5)
-        cv2.line(orig_horizontal_line, (int(tl_bl_x), int(tl_bl_y)), (int(tr_br_x), int(tr_br_y)), (255, 0, 255), thickness=5)
+        cv2.line(orig_vertical_line, (int(tl_tr_x), int(tl_tr_y)), (int(bl_br_x), int(bl_br_y)), (0, 0, 255), thickness=5)
+        cv2.line(orig_horizontal_line, (int(tl_bl_x), int(tl_bl_y)), (int(tr_br_x), int(tr_br_y)), (0, 0, 255), thickness=5)
 
         # draw text on midpoint of lines
         # vertical
         (m_vertical_x, m_vertical_y) = midpoint((tl_tr_x, tl_tr_y), (bl_br_x, bl_br_y))
         cv2.putText(orig_vertical_line, "? cm", (int(m_vertical_x + 10), int(m_vertical_y)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 255), thickness=3)
+                    cv2.FONT_HERSHEY_SIMPLEX, 3.0, (255, 255, 0), thickness=5)
         # horizontal
         (m_horizontal_x, m_horizontal_y) = midpoint((tl_bl_x, tl_bl_y), (tr_br_x, tr_br_y))
-        cv2.putText(orig_horizontal_line, "? cm", (int(m_horizontal_x), int(m_horizontal_y + 40)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 255), thickness=3)
+        cv2.putText(orig_horizontal_line, "? cm", (int(m_horizontal_x), int(m_horizontal_y - 10)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 3.0, (255, 255, 0), thickness=5)
 
         # calculate the box's width and height
-        box_height = dist.euclidean((tl_tr_x, tl_tr_y), (bl_br_x, bl_br_y))
-        box_width = dist.euclidean((tl_bl_x, tl_bl_y), (tr_br_x, tr_br_y))
+        box_height = twoPointDistance((tl_tr_x, tl_tr_y), (bl_br_x, bl_br_y))
+        box_width = twoPointDistance((tl_bl_x, tl_bl_y), (tr_br_x, tr_br_y))
 
         contour_box = {
             "horizontal": (convert_cv_to_pil(orig_horizontal_line), box_width),
@@ -385,7 +384,6 @@ def get_slice_roi():
     return __output_image
 
 
-# TODO make this a generic function
 def generate_text_file(file_path):
     global __circumferences, __circumferences_data
 

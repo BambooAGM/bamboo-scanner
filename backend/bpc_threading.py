@@ -87,7 +87,7 @@ class LiveFeedThread(threading.Thread):
                             initSensors(structureRadius=ring_diameter * 0.5)
 
                             # run calibration
-                            calibrateAllSensors(testRadius=calibration_obj_diameter * 0.5, testDistance=rail_z_distance)
+                            calibrateAllSensors(testRadius=(calibration_obj_diameter * 0.5)+0.8, testDistance=rail_z_distance)
 
                             # don't give the signal if the user has already left the tool
                             if not main_quit.is_set() and not self.kill_thread.is_set():

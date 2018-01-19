@@ -3,7 +3,7 @@ from datetime import datetime
 from tkinter import *
 from tkinter import filedialog, messagebox
 
-from backend.bpc import generate_textfile, saved_measurement, delete_measurement, sort_ByZeta
+from backend.bpc import generate_text_file, saved_measurement, delete_measurement, sort_ByZeta
 from gui.widgets.custom import HorizontalTable, YellowButton, RedButton, AutoScrollbar
 from gui.widgets.helpers import make_columns_responsive, make_rows_responsive
 
@@ -136,7 +136,7 @@ class ResultsBPC(Frame):
 
         # make sure the user didn't cancel the dialog
         if len(save_path) > 0:
-            if generate_textfile(save_path):
+            if generate_text_file(save_path):
                 # all good
                 messagebox.showinfo("Success!", "File was generated successfully.")
                 # reset BPC

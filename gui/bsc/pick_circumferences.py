@@ -10,7 +10,7 @@ class PickCircumferencesBSC(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-        self.title = "Select the slice's circumferences"
+        self.title = "Select the circumferences of a bamboo slice"
         self.circumferences = []
         self.selected_circumferences = []
         self.responsive_image = None
@@ -32,6 +32,9 @@ class PickCircumferencesBSC(Frame):
         self.selected_count_text = StringVar()
         self.selected_count_text.trace("w", self.update_buttons)
 
+        # Min size of object title column
+        self.grid_columnconfigure(0, minsize=150)
+
         # title of circumference image
         self.circumference_title_var = StringVar()
         self.circumference_title = Label(self, textvariable=self.circumference_title_var, font=self.controller.header_font)
@@ -50,7 +53,7 @@ class PickCircumferencesBSC(Frame):
 
         # instructions
         instructions_text = "More than 2 circumferences were found.\n"
-        instructions_text += "Select the inner and outer circumference of the bamboo slice."
+        instructions_text += "Select the inner and outer circumference of one bamboo slice."
         self.instructions = Label(self, text=instructions_text, relief=GROOVE, padx=10, pady=10)
         self.instructions.grid(row=1, column=3, padx=40)
 
@@ -102,7 +105,7 @@ class PickCircumferencesBSC(Frame):
 
     def update_navigation(self, *args):
         current = self.current_circumference_var.get()
-        self.circumference_title_var.set("Circumference #" + str(current + 1))
+        self.circumference_title_var.set("Circumference\n" + str(current + 1) + " of " + str(len(self.circumferences)))
 
         # toggle prev
         if current == 0:
@@ -147,11 +150,17 @@ class PickCircumferencesBSC(Frame):
                     self.select_button.configure(state=NORMAL, cursor="hand2")
 
     def update_confirm_button(self):
-        # Toggle confirm button
         if self.selected_count_var.get() == 2:
+            # enable confirm button
             self.confirm_button.configure(state=NORMAL, cursor="hand2")
+
+            # make text green
+            self.selected_count.configure(fg="#35AD35")
         else:
             self.confirm_button.configure(state=DISABLED, cursor="arrow")
+
+            # make text red
+            self.selected_count.configure(fg="red")
 
     def update_count_text(self, *args):
         # update label text

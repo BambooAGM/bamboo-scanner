@@ -44,58 +44,59 @@ class ConfigBPC(Frame):
                                          font=self.controller.bold_font)
         self.ring_diameter_label.grid(row=0, column=0, sticky=SW, padx=20)
 
+        # ring diameter range
+        self.range_ring_diameter = Label(self.calibration_settings, text="[Valid range: 10 - 30]", fg="grey", anchor=SW,
+                                         font=self.controller.small_font)
+        self.range_ring_diameter.grid(row=1, column=0, sticky=NW, padx=20)
+
         self.ring_diameter_entry = EntryWithPlaceholder(self.calibration_settings, text_var=self.ring_diameter_var,
                                                         placeholder_text="0.00", validatecommand=validate_cmd,
                                                         validate="key", textvariable=self.ring_diameter_var,
                                                         name="ring")
-        self.ring_diameter_entry.grid(row=1, column=0, sticky=NW, padx=20, pady=20)
+        self.ring_diameter_entry.grid(row=2, column=0, sticky=NW, padx=20, pady=20)
 
         # Calibration object
         self.calibration_object_label = Label(self.calibration_settings, text="Calibration object diameter",
                                               font=self.controller.bold_font, anchor=SW)
         self.calibration_object_label.grid(row=0, column=1, sticky=SW, padx=20)
 
+        # calibration object diameter range
+        self.range_calibration_obj_diameter = Label(self.calibration_settings, text="[Valid range: 2 - 26]", fg="grey",
+                                                    anchor=NW, font=self.controller.small_font)
+        self.range_calibration_obj_diameter.grid(row=1, column=1, sticky=NW, padx=20)
+
         self.calibration_object_entry = EntryWithPlaceholder(self.calibration_settings, text_var=self.calibration_object_var,
                                                              placeholder_text="0.00", validatecommand=validate_cmd,
                                                              textvariable=self.calibration_object_var, validate="key",
                                                              name="calibration_obj")
-        self.calibration_object_entry.grid(row=1, column=1, sticky=NW, padx=20, pady=20)
+        self.calibration_object_entry.grid(row=2, column=1, sticky=NW, padx=20, pady=20)
 
         # Distance to flat surface at end of rail
         self.distance_z_label = Label(self.calibration_settings, text="Distance to the end of the rail", anchor=SW,
                                       font = self.controller.bold_font)
         self.distance_z_label.grid(row=3, column=0, sticky=SW, padx=20)
 
+        # z distance range
+        self.range_z_distance = Label(self.calibration_settings, text="[Valid range: 15.24 - 645]", fg="grey", anchor=NW,
+                                      font=self.controller.small_font)
+        self.range_z_distance.grid(row=4, column=0, sticky=NW, padx=20)
+
         self.distance_z_entry = EntryWithPlaceholder(self.calibration_settings, text_var=self.distance_z_var,
                                                      placeholder_text="0.00", validate="key", name="z_distance",
                                                      validatecommand=validate_cmd, textvariable=self.distance_z_var)
-        self.distance_z_entry.grid(row=4, column=0, sticky=NW, padx=20, pady=20)
-
-        # Invalid ring diameter
-        self.invalid_ring_diameter = Label(self.calibration_settings, text="The ring's diameter must be between 10 and 30 centimeters",
-                                  fg="red", anchor=NW, justify=LEFT)
-
-        # Invalid calibration object diameter
-        self.invalid_calibration_obj_diameter = Label(self.calibration_settings,
-                                                      text="The calibration object's diameter\nshould be between 2 and 28 centimeters",
-                                                      fg="red", anchor=NW, justify=LEFT)
+        self.distance_z_entry.grid(row=5, column=0, sticky=NW, padx=20, pady=20)
 
         # calibration object diameter greater than ring diameter
         self.calibration_obj_greater_ring = Label(self.calibration_settings,
                                                   text="The calibration object's diameter\ncan't be greater than the ring diameter",
-                                                  fg="red", anchor=NW, justify=LEFT)
-
-        # Invalid z distance
-        self.invalid_z_distance = Label(self.calibration_settings,
-                                        text="Valid Z distances are between 15.24 and 645 centimeters",
-                                        fg="red", anchor=NW, justify=LEFT)
+                                                  fg="red", anchor=NW)
 
         # make calibration section responsive
         make_columns_responsive(self.calibration_settings)
         make_rows_responsive(self.calibration_settings)
 
         # description label
-        self.description_label = Label(self, text="Information about the sample (optional)",
+        self.description_label = Label(self, text="Information about the bamboo sample (optional)",
                                        font=self.controller.bold_font)
         self.description_label.grid(row=1, column=0, sticky=SW, padx=20, pady=20)
 
@@ -116,15 +117,13 @@ class ConfigBPC(Frame):
         make_rows_responsive(self)
         make_columns_responsive(self)
 
-        # min size sample description label row
-        # self.grid_rowconfigure(1, minsize=60)
         # min size of buttons row
         self.grid_rowconfigure(3, minsize=80)
 
 
     def validate_calibration_settings(self, action, value_if_allowed, text, widget):
         # only when inserting
-        if (action == "1"):
+        if action == "1":
             if text in "0123456789.":
                 try:
                     # name of the widget
@@ -134,42 +133,30 @@ class ConfigBPC(Frame):
                     if widget_name == "ring":
                         # valid range [10,30]
                         if float(value_if_allowed) >= 1.0 and float(value_if_allowed) <= 30.0:
-                            # remove invalid message
-                            self.invalid_ring_diameter.grid_forget()
                             return True
                         else:
                             # Make system bell sound
                             self.bell()
-                            # Show invalid message
-                            self.invalid_ring_diameter.grid(row=2, column=0, sticky=NW, padx=20)
                             return False
 
                     # calibration object    
                     elif widget_name == "calibration_obj":
-                        # valid range [2,28]
-                        if float(value_if_allowed) >= 1.0 and float(value_if_allowed) <= 28.0:
-                            # remove invalid message
-                            self.invalid_calibration_obj_diameter.grid_forget()
+                        # valid range [2,26]
+                        if float(value_if_allowed) >= 1.0 and float(value_if_allowed) <= 26.0:
                             return True
                         else:
                             # Make system bell sound
                             self.bell()
-                            # Show invalid message
-                            self.invalid_calibration_obj_diameter.grid(row=2, column=1, sticky=NW, padx=20)
                             return False
 
                     # z distance entry
                     else:
                         # valid range [15.24, 645]
                         if float(value_if_allowed) >= 1.0 and float(value_if_allowed) <= 645.0:
-                            # remove invalid message
-                            self.invalid_z_distance.grid_forget()
                             return True
                         else:
                             # Make system bell sound
                             self.bell()
-                            # Show invalid message
-                            self.invalid_z_distance.grid(row=5, column=0, sticky=NW, padx=20)
                             return False
 
                 except ValueError:
@@ -188,37 +175,31 @@ class ConfigBPC(Frame):
 
         # valid range [10,30]
         ring_diameter_ok = ring_diameter and float(ring_diameter) >= 10.0
-        # valid range [2,28]
+        # valid range [2,26]
         calibration_object_ok = calibration_obj and float(calibration_obj) >= 2.0
         # valid range [15.24, 645]
         distance_z_ok = distance_z and float(distance_z) >= 15.24
 
+        # show invalid message when calibration object diameter is greater than ring
+        if ring_diameter_ok and calibration_object_ok and (float(ring_diameter) - float(calibration_obj)) > 0:
+            self.calibration_obj_greater_ring.grid_forget()
+        elif ring_diameter_ok and calibration_object_ok and (float(ring_diameter) - float(calibration_obj)) <= 0:
+            self.calibration_obj_greater_ring.grid(row=3, column=1, sticky=NW, padx=20)
+
         # All entries valid
-        if ring_diameter_ok and calibration_object_ok and distance_z_ok:
+        if ring_diameter_ok and calibration_object_ok and distance_z_ok and \
+                (float(ring_diameter) - float(calibration_obj)) > 0:
             # enable begin button
             self.begin_button.configure(state=NORMAL, cursor="hand2")
+
+        # at least one entry is not valid
         else:
             # disable begin button
             self.begin_button.configure(state=DISABLED, cursor="arrow")
 
-            # invalid ring diameter
-            if not ring_diameter_ok:
-                # Show invalid message
-                self.invalid_ring_diameter.grid(row=2, column=0, sticky=NW, padx=20)
-
-            # invalid calibration object diameter
-            if not calibration_object_ok:
-                # Show invalid message
-                self.invalid_calibration_obj_diameter.grid(row=2, column=1, sticky=NW, padx=20)
-
-            # invalid z distance
-            if not distance_z_ok:
-                # Show invalid message
-                self.invalid_z_distance.grid(row=5, column=0, sticky=NW, padx=20)
-
     def begin(self):
         # save sample description
-        set_sampleDescription(self.text_area.get_text())
+        set_sampleDescription(self.text_area.text.get(1.0, END))
 
         # save calibration settings
         ring_diameter = float(self.ring_diameter_var.get())
@@ -231,4 +212,4 @@ class ConfigBPC(Frame):
 
     def reset(self):
         # reset description
-        self.text_area.clear_text()
+        self.text_area.text.delete(1.0, END)
