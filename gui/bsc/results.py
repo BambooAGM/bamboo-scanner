@@ -45,20 +45,16 @@ class ResultsBSC(Frame):
         make_columns_responsive(self)
 
     def on_show_frame(self, event=None):
-        # generate polar coordinates and avg diameter of circumferences
-        data_circumferences = circumferences_to_polar_and_avg_diameter()
-
         final_circumferences = translate_coordinates()
 
         # create plot
         figure = Figure(figsize=(5,5), dpi=100)
         ax = figure.add_subplot(111)
-        # ax.set_title("Circumferences")
 
         # colors of plot series (outer = red, inner = blue)
         colors = ("r", "b")
 
-        for ((contour_x, contour_y), (centroid_x, centroid_y)), color in zip(final_circumferences, colors):
+        for ((contour_x, contour_y), (centroid_x, centroid_y), avg_diameter), color in zip(final_circumferences, colors):
             # plot the contours
             ax.plot(contour_x, contour_y, color=color)
             # plot the centroids

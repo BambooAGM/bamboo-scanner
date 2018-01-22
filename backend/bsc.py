@@ -1,12 +1,11 @@
 import copy
-import math
 
 import cv2
 import numpy as np
 from PIL import Image
 from imutils import perspective
 
-from backend.utils import rect_to_polar, get_timestamp, midpoint, twoPointDistance
+from backend.utils import get_timestamp, midpoint, twoPointDistance
 
 __image_path = None
 __original_image = None
@@ -16,7 +15,6 @@ __original_circumferences = []  # keeps all the circumferences originally found
 __circumferences = []  # list of tuples: (contour, (centroidX, centroidY))
 __final_circumferences = []   # list of tuples: ((contour_x, contour_y), (centroid_x, centroid_y))
 __pixels_per_metric = None
-__circumferences_data = []  # list of tuples: (rs, thetas, avg_diameter)
 __output_image = None
 
 
@@ -87,15 +85,12 @@ def process_image(image_path):
         if area < 10000:
             continue
 
-        # compute the rotated bounding box of the contour
+        # rotated bounding box of the contour
         box = cv2.minAreaRect(c)
         box = cv2.boxPoints(box)
         box = np.array(box, dtype="int")
 
-        # order the points in the contour such that they appear
-        # in top-left, top-right, bottom-right, and bottom-left
-        # order, then draw the outline of the rotated bounding
-        # box
+        # order the box points in top-left, top-right, bottom-right, and bottom-left
         box = perspective.order_points(box)
 
         # save these boxes so we can browse them in the GUI
@@ -248,6 +243,7 @@ def render_boxes():
 
 def set_pixels_per_metric(value):
     global __pixels_per_metric
+
     __pixels_per_metric = value
 
 
@@ -272,7 +268,7 @@ def translate_coordinates():
     # sort circumferences; Outer always first
     sort_circumferences()
 
-    # 2 rows for each circumference: contains ((contour_xS, contour_yS), (centroid_x, centroid_y))
+    # 2 rows for each circumference: contains ((contour_xS, contour_yS), (centroid_x, centroid_y), avg_diameter)
     __final_circumferences.clear()
 
     x0 = None
@@ -281,9 +277,9 @@ def translate_coordinates():
     for i, (contour, centroid) in enumerate(__circumferences):
         temp_contour_x = []
         temp_contour_y = []
-        # temp_diameters = []
+        temp_diameters = []
 
-        # outer contour
+        # outer contour gives axis information
         if i == 0:
             # leftmost point gives x0
             leftmost = tuple(contour[contour[:, :, 0].argmin()][0])
@@ -294,19 +290,6 @@ def translate_coordinates():
             x0 = leftmost[0]
             y0 = bottommost[1]
 
-        # translate the contour x & y coordinates
-        for points in contour:
-            for (x, y) in points:
-                # translate in relation to calculated origin, and scaled with pixels-per-metric
-                x_final = abs(x - x0) / __pixels_per_metric
-                y_final = abs(y - y0) / __pixels_per_metric
-
-                # TODO calculate avg diameter
-
-                # store x and y separately
-                temp_contour_x.append(x_final)
-                temp_contour_y.append(y_final)
-
         # translate the centroid x & y coordinates
         (cx, cy) = centroid
 
@@ -314,46 +297,29 @@ def translate_coordinates():
         cx_final = abs(cx - x0) / __pixels_per_metric
         cy_final = abs(cy - y0) / __pixels_per_metric
 
-        # save
-        __final_circumferences.append(((temp_contour_x, temp_contour_y), (cx_final, cy_final)))
-
-    return __final_circumferences
-
-def circumferences_to_polar_and_avg_diameter():
-    global __pixels_per_metric, __circumferences_data
-
-    # sort circumferences; Outer always first
-    sort_circumferences()
-
-    # 2 rows for each circumference: contains (rs, thetas, avg diameter)
-    __circumferences_data.clear()
-
-    for circumference in __circumferences:
-        (contour, centroid) = circumference
-        temp_r = []
-        temp_theta = []
-        temp_diameters = []
-
+        # translate the contour x & y coordinates
         for points in contour:
-            for inner in points:
-                (r, theta) = rect_to_polar(point=inner, center=centroid, inverted_y=True)
-                scaled_r = r / __pixels_per_metric
+            for (x, y) in points:
+                # translate in relation to calculated origin, and scaled with pixels-per-metric
+                x_final = abs(x - x0) / __pixels_per_metric
+                y_final = abs(y - y0) / __pixels_per_metric
 
-                # save diameter for average
-                temp_diameters.append(scaled_r * 2.0)
+                # calculate radius
+                radius = twoPointDistance((x_final, y_final), (cx_final, cy_final))
+                # save diameters for average diameter
+                temp_diameters.append(radius * 2.0)
 
-                # save radius
-                temp_r.append(scaled_r)
-                # save theta
-                temp_theta.append(math.degrees(theta))
+                # store x and y separately
+                temp_contour_x.append(x_final)
+                temp_contour_y.append(y_final)
 
         # calculate average diameter
-        temp_average_diameter = np.mean(temp_diameters)
+        average_diameter = np.mean(temp_diameters)
 
         # save
-        __circumferences_data.append((temp_r, temp_theta, temp_average_diameter))
+        __final_circumferences.append(((temp_contour_x, temp_contour_y), (cx_final, cy_final), average_diameter))
 
-    return __circumferences_data
+    return __final_circumferences
 
 
 def get_slice_roi():
@@ -366,7 +332,6 @@ def get_slice_roi():
     temp = __original_image.copy()
 
     # red and blue to match matplotlib
-    # colors = ((179, 115, 24), (15, 132, 255))
     colors = ((0, 0, 255), (179, 115, 24))
 
     # outline the circumferences
@@ -385,7 +350,7 @@ def get_slice_roi():
 
 
 def generate_text_file(file_path):
-    global __circumferences, __circumferences_data
+    global __circumferences
 
     try:
         f = open(file_path, "w+")
@@ -395,21 +360,14 @@ def generate_text_file(file_path):
         f.write("\n")
 
         tags = ("Outer Circumference", "Inner Circumference")
-        for ((rs, thetas, avg_diameter), ((contour_xS, contour_yS), (centroid_x, centroid_y)), tag) in zip(__circumferences_data, __final_circumferences, tags):
+        for (((contour_xS, contour_yS), (centroid_x, centroid_y), avg_diameter), tag) in zip(__final_circumferences, tags):
 
             # Write circumference tag
             f.write("*%s*\n" % tag)
             f.write("\n")
 
-            # # write polar coords
-            # f.write("Polar coordinates:\n")
-            # f.write("r, theta\n")
-            # for (r, theta) in zip(rs, thetas):
-            #     f.write("%s, %s\n" % (r, theta))
-            # f.write("\n")
-
             # write x, y coordinates
-            f.write("Rectangular coordinates:\n")
+            f.write("Rectangular coordinates: (%s points)\n" % len(contour_xS))
             f.write("x, y\n")
             for (x, y) in zip(contour_xS, contour_yS):
                 f.write("%s, %s\n" % (x, y))
@@ -442,7 +400,7 @@ def generate_text_file(file_path):
 
 def reset_bsc_backend():
     global __image_path, __original_image, __config_image, __pixels_per_metric, __contour_boxes,\
-        __original_circumferences, __circumferences, __final_circumferences, __circumferences_data, __output_image
+        __original_circumferences, __circumferences, __final_circumferences, __output_image
 
     __image_path = None
     __original_image = None
@@ -452,7 +410,6 @@ def reset_bsc_backend():
     __circumferences.clear()
     __final_circumferences.clear()
     __pixels_per_metric = None
-    __circumferences_data.clear()
     __output_image = None
 
 
@@ -462,11 +419,3 @@ def convert_cv_to_pil(image):
 
     # convert the image to PIL format
     return Image.fromarray(image)
-
-
-if __name__ == "__main__":
-    print(process_image("C:/Users/arosa/PycharmProjects/BambooScanner/test3a.jpg"))
-    set_pixels_per_metric(5.0)
-    # print(circumferences_to_polar())
-    # render_all_circumferences()
-    # generate_text_file("C:/Users/arosa/PycharmProjects/BambooScanner/BSC_test.txt")

@@ -54,12 +54,6 @@ class ScrollableTextArea(Frame):
         self.text.configure(yscrollcommand=self.scroll.set)
         self.scroll.pack(side=RIGHT, fill=Y)
 
-    def get_text(self):
-        self.text.get(1.0, END)
-
-    def clear_text(self):
-        self.text.delete(1.0, END)
-
 
 class VerticalTable(Frame):
     def __init__(self, parent, **kwargs):
@@ -308,12 +302,6 @@ class ResponsiveImage(Frame):
         # only NW for now
         else:
             self.canvas.create_image(0, 0, image=self.image, anchor=NW, tags=self.tag)
-
-    # def change_image(self, image):
-    #     self.original = image
-    #     self.image = ImageTk.PhotoImage(self.original)
-    #     self.canvas.delete("IMG")
-    #     self.canvas.create_image(0, 0, image=self.image, anchor=NW, tags="IMG")
 
 
 class EntryWithPlaceholder(Entry):
