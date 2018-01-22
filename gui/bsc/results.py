@@ -88,7 +88,8 @@ class ResultsBSC(Frame):
         if len(save_path) > 0:
             if generate_text_file(save_path):
                 # all good
-                messagebox.showinfo("Success!", "File was generated successfully.")
+                messagebox.showinfo("Text file was generated successfully!", "The bamboo slice information has been stored to "
+                                    + save_path)
                 # reset BSC
                 self.controller.reset_BSC()
                 # go to home screen

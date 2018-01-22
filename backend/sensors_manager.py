@@ -9,6 +9,7 @@ import serial.tools.list_ports
 from backend.utils import twoPointDistance
 
 sensorArray = []
+sensors_initialized = False
 
 numberOfSamples = 10
 cacheStructuredSensorData = []
@@ -244,6 +245,9 @@ def hardResetArduinoSerial():
 ###########################################################
 ## CALIBRATION
 ###########################################################
+def are_sensors_initialized():
+    return sensors_initialized
+
 
 def threePointAngle(vertexp1, p2, p3):
     p12 = twoPointDistance(vertexp1, p2)
@@ -251,7 +255,7 @@ def threePointAngle(vertexp1, p2, p3):
     p23 = twoPointDistance(p2, p3)
 
     result = math.degrees(math.acos(round((pow(p12, 2.0) + pow(p13, 2.0) - pow(p23, 2.0)) / (2.0 * p12 * p13), 10)))
-    print(result)
+
     return result
 
 
@@ -332,17 +336,21 @@ def calibrateSingleUltSensor(s, distanceMeasured, testDistance):
         return s
 
     except ZeroDivisionError:
-        print("The ultrasonic sensor is not reading correctly. Verify it's properly connected.")
+        s.factor = 1
+
+        return s
 
 
 def calibrateAllSensors(testRadius=1.58, testDistance=10):
-    global sensorArray
+    global sensorArray, sensors_initialized
 
     if (len(sensorArray) == 0):
         initSensors()
 
+    # Generate virtual calibration object
     testPoints = PointsInCircum(testRadius, 1000)
 
+    # Grab fresh sensor readings
     measuredDistances = getCleanSensorData()
 
     # calibrate IR sensors
@@ -351,6 +359,9 @@ def calibrateAllSensors(testRadius=1.58, testDistance=10):
 
     # calibrate ultrasonic sensor
     sensorArray[-1] = calibrateSingleUltSensor(sensorArray[-1], measuredDistances[-1], testDistance)
+
+    # flag that sensors have been initialized/calibrated
+    sensors_initialized = True
 
 
 ###############################################################

@@ -138,7 +138,8 @@ class ResultsBPC(Frame):
         if len(save_path) > 0:
             if generate_text_file(save_path):
                 # all good
-                messagebox.showinfo("Success!", "File was generated successfully.")
+                messagebox.showinfo("Text file was generated successfully!", "Your measurements have been saved to "
+                                    + save_path)
                 # reset BPC
                 self.controller.reset_BPC()
                 # go to home screen

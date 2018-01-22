@@ -160,6 +160,10 @@ class MeasureBPC(Frame):
         elif self.live_thread.calibrate_now.is_set():
             # only set message once
             if not self.busy_message_set:
+
+                # restore to black font
+                self.status_message.configure(fg="black")
+
                 # Show status message
                 self.status_var.set("Calibrating sensors...")
 
@@ -203,11 +207,27 @@ class MeasureBPC(Frame):
 
                     # only set message once
                     if self.busy_message_set:
-                        # Ready to capture or calibrate
-                        self.status_var.set("Ready!")
 
-                        # Restore buttons
-                        self.restore_buttons()
+                        # sensors have been initialized
+                        if are_sensors_initialized():
+                            # Ready to capture or calibrate
+                            self.status_var.set("Ready!")
+
+                            # Restore buttons
+                            self.restore_buttons()
+
+                        # not initialized
+                        else:
+                            # must calibrate
+                            self.status_var.set("Calibration required")
+                            self.status_message.configure(fg="red")
+
+                            # enable calibrate button
+                            self.calibrate_button.configure(state=NORMAL, cursor="hand2")
+
+                            # Disable capture and view results
+                            self.capture_button.configure(state=DISABLED, cursor="arrow")
+                            self.results_button.configure(state=DISABLED, cursor="arrow")
 
                         # no longer busy
                         self.busy_message_set = False
@@ -221,6 +241,8 @@ class MeasureBPC(Frame):
         elif not self.live_thread.reading_sensors.is_set() and self.do_update and not self.busy_message_set:
             # Show loading message
             self.status_var.set("Connecting to sensors...")
+            # restore to black font
+            self.status_message.configure(fg="black")
 
             # Disable buttons
             self.disable_buttons()
