@@ -3,3 +3,5 @@
 .idea/dictionaries/
 .idea/workspace.xml
 **/venv/
+/build/
+/dist/

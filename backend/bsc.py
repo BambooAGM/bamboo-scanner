@@ -13,7 +13,7 @@ __config_image = None
 __contour_boxes = []
 __original_circumferences = []  # keeps all the circumferences originally found
 __circumferences = []  # list of tuples: (contour, (centroidX, centroidY))
-__final_circumferences = []   # list of tuples: ((contour_x, contour_y), (centroid_x, centroid_y))
+__final_circumferences = []   # list of tuples: ((contour_x, contour_y), (centroid_x, centroid_y), avg_diameter)
 __pixels_per_metric = None
 __output_image = None
 
@@ -248,7 +248,7 @@ def set_pixels_per_metric(value):
 
 
 def sort_circumferences():
-    # get a reference of each circumference tuple (contour, centroid, hull)
+    # get a reference of each circumference tuple (contour, centroid)
     circumference_1 = __circumferences[0]
     circumference_2 = __circumferences[1]
 
