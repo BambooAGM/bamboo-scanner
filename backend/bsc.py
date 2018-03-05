@@ -52,7 +52,7 @@ def process_image(image_path):
     Retrieves contours of circumferences and other (reference) objects.
 
     :param image_path: path to source image in filesystem.
-    :return: number of circumferences found
+    :return: number of circumferences found, or None if error reading image
     """
     global __image_path, __original_image, __config_image, __contour_boxes, __original_circumferences, __circumferences
 
@@ -248,6 +248,10 @@ def set_pixels_per_metric(value):
 
 
 def sort_circumferences():
+    # don't sort if there's only 1
+    if len(__circumferences) <= 1:
+        return
+
     # get a reference of each circumference tuple (contour, centroid)
     circumference_1 = __circumferences[0]
     circumference_2 = __circumferences[1]

@@ -103,8 +103,8 @@ class ConfigBSC(Frame):
             self.path_entry.grid()
             self.choose_button.configure(text="Change image")
 
-            # error processing image or less than 2 found
-            if self.circumferences_found is None or self.circumferences_found < 2:
+            # error processing image or none found
+            if self.circumferences_found is None or self.circumferences_found == 0:
                 # disable begin button
                 self.begin_button.configure(state=DISABLED, cursor="arrow")
 
@@ -118,11 +118,11 @@ class ConfigBSC(Frame):
                     # show placeholder image
                     self.set_placeholder_image()
 
-                # less than 2 found
+                # none found
                 else:
                     self.message_var.set(str(self.circumferences_found) + " circumference(s) found.\n Choose another image.")
 
-            # at least 2 found
+            # some where found
             else:
                 # enable begin button
                 self.begin_button.configure(state=NORMAL, cursor="hand2")
@@ -130,11 +130,11 @@ class ConfigBSC(Frame):
                 # make message green
                 self.message.configure(fg="#35AD35")
 
-                # 2 circumferences found
-                if self.circumferences_found == 2:
+                # 1 or 2 found
+                if self.circumferences_found <= 2:
                     self.message_var.set("Bamboo slice detected!\n No need to choose circumferences.")
 
-                # more than 2 where found
+                # more than 2 found
                 else:
                     self.message_var.set(str(self.circumferences_found) + " circumferences found.\n You must choose two of them.")
 
