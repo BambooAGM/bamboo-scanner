@@ -1,4 +1,5 @@
 from datetime import datetime
+from subprocess import Popen
 from tkinter import *
 from tkinter import filedialog, messagebox
 
@@ -83,13 +84,18 @@ class ResultsBSC(Frame):
         # make sure the user didn't cancel the dialog
         if len(save_path) > 0:
             if generate_text_file(save_path):
-                # all good
-                messagebox.showinfo("Text file was generated successfully!", "The bamboo slice information has been stored to "
-                                    + save_path)
-                # reset BSC
-                self.controller.reset_BSC()
-                # go to home screen
-                self.controller.show_frame("Home")
+                # ask to open text file
+                should_open_file = messagebox.askyesno("Open generated text file?",
+                                                       "The bamboo slice information has been saved in " + save_path
+                                                       + "\n\nWould you like to open the text file now?")
+
+                # open the text file
+                if should_open_file:
+                    try:
+                        Popen(save_path, shell=True)
+                    except OSError as e:
+                        print("Error opening text file:", e)
+
             else:
                 messagebox.showerror("Error generating text file", "Make sure you have access to the selected destination.")
 
